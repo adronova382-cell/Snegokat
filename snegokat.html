@@ -1,0 +1,3825 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0f1624">
+<title>Снегокат: гаражный тюнинг</title>
+<style>
+:root {
+  --bg: #0f1624;
+  --panel: #18233a;
+  --panel2: #1f2c48;
+  --line: #2c3d63;
+  --text: #e8f0ff;
+  --muted: #8ea2c8;
+  --accent: #4fc3f7;
+  --hot: #ff7043;
+  --good: #69f0ae;
+  --bad: #ff5252;
+  --gold: #ffd740;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+button { font: inherit; color: inherit; }
+.hidden { display: none !important; }
+.small { font-size: 13px; }
+.muted { color: var(--muted); }
+
+.screen { position: fixed; inset: 0; display: none; }
+.screen.active { display: block; }
+
+/* ---------- кнопки */
+.btn {
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 14px; cursor: pointer; transition: transform .08s, background .15s; white-space: nowrap;
+}
+.btn:hover:not(:disabled) { background: #29396012; background: #283a60; }
+.btn:active:not(:disabled) { transform: scale(.96); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: linear-gradient(180deg, #ff8a50, #f4511e); border-color: #ff8a50; color: #fff; font-weight: 600; }
+.btn.primary:hover:not(:disabled) { background: linear-gradient(180deg, #ff9e6b, #ff5722); }
+.btn.danger { background: #5c1a1a; border-color: #8e2424; }
+.btn.active { background: var(--accent); color: #062033; border-color: var(--accent); font-weight: 600; }
+.btn.big { font-size: 20px; padding: 14px 34px; border-radius: 14px; }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+
+/* ---------- титул */
+#scr-title { background: radial-gradient(ellipse at 50% 120%, #2a4a7a 0%, #0f1624 60%); }
+.title-box { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px; gap: 10px; }
+.title-icon { font-size: 80px; animation: bob 2s ease-in-out infinite; }
+h1 { font-size: clamp(42px, 10vw, 88px); margin: 0; letter-spacing: 6px; background: linear-gradient(180deg, #fff, #9fd3ff); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 40px rgba(79,195,247,.3); }
+.sub { color: var(--muted); margin: 0 0 20px; }
+.title-snow { position: absolute; inset: 0; background-image: radial-gradient(2px 2px at 20% 30%, #fff, transparent), radial-gradient(2px 2px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 85% 60%, #fff, transparent), radial-gradient(1.5px 1.5px at 10% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 55% 45%, #fff, transparent); background-size: 300px 300px; animation: snow 12s linear infinite; opacity: .7; }
+@keyframes snow { to { background-position: 60px 300px; } }
+@keyframes bob { 50% { transform: translateY(-10px) rotate(-4deg); } }
+
+/* ---------- гараж */
+#scr-garage { display: none; flex-direction: column; background: linear-gradient(180deg, #121b2d, #0c1220); }
+#scr-garage.active { display: flex; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.logo { font-weight: 800; font-size: 20px; }
+.coins { margin-left: auto; font-weight: 700; font-size: 20px; color: var(--gold); background: #0006; padding: 4px 14px; border-radius: 20px; }
+.tabs { display: flex; gap: 4px; padding: 8px 12px 0; overflow-x: auto; background: var(--panel); scrollbar-width: none; }
+.tabs button { background: transparent; border: 0; border-bottom: 3px solid transparent; padding: 8px 12px; cursor: pointer; color: var(--muted); white-space: nowrap; font-size: 15px; }
+.tabs button.active { color: var(--text); border-color: var(--hot); }
+.g-body { flex: 1; overflow-y: auto; padding: 14px 16px 40px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+.card h3 { margin: 4px 0 8px; font-size: 16px; }
+.card.hero { text-align: center; padding: 30px; background: linear-gradient(135deg, #3e1d0e, #18233a); }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+.preview-card canvas { width: 100%; height: auto; border-radius: 10px; display: block; margin-bottom: 8px; }
+.row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+.wrap { flex-wrap: wrap; }
+.chip { background: var(--panel2); border: 1px solid var(--line); border-radius: 20px; padding: 6px 12px; cursor: pointer; font-size: 14px; }
+.chip.on { background: #1e4b3a; border-color: var(--good); }
+.tag { background: var(--panel2); border-radius: 8px; padding: 3px 8px; font-size: 13px; }
+.tag.hot { background: #5a2410; color: #ffab91; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.sw { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #0006; cursor: pointer; }
+.sw.sel { border-color: #fff; transform: scale(1.1); }
+.bar { height: 10px; background: #0007; border-radius: 6px; overflow: hidden; margin: 6px 0; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--good)); transition: width .2s; }
+.mix { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin: 8px 0; }
+.mix label { display: flex; flex-direction: column; font-size: 13px; color: var(--muted); gap: 4px; }
+.mix input { width: 110px; background: #0b1220; border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 6px 8px; font-size: 16px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.proj { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.proj.done { border-color: #2e7d5b; background: linear-gradient(180deg, #17322a, var(--panel)); }
+.proj .eff { color: #b3e5fc; }
+.diff { font-size: 11px; opacity: .7; }
+.parts { display: flex; flex-wrap: wrap; gap: 4px; }
+.part { font-size: 12px; padding: 3px 7px; border-radius: 6px; background: #0005; }
+.part.ok { color: var(--good); }
+.part.no { color: #ff8a80; }
+.badge { display: inline-block; background: #1e4b3a; color: var(--good); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+
+.stages { display: flex; flex-direction: column; gap: 8px; }
+.stage { display: flex; gap: 12px; align-items: flex-start; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.stage .num { width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--panel2); display: grid; place-items: center; font-weight: 700; }
+.stage.done { opacity: .65; }
+.stage.done .num { background: #2e7d5b; }
+.stage.cur { border-color: var(--hot); box-shadow: 0 0 0 1px var(--hot) inset; }
+.stage.cur .num { background: var(--hot); }
+.stage.locked { opacity: .45; }
+.sbody { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+
+.cats { margin-bottom: 10px; }
+.items { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+.item { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.item .ico { font-size: 30px; width: 40px; text-align: center; }
+.item .info { flex: 1; min-width: 0; }
+.item .have { color: var(--accent); }
+.btn.buy { font-weight: 700; color: var(--gold); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; text-align: center; }
+.stats b { display: block; font-size: 22px; }
+.stats small { color: var(--muted); }
+.pad { padding: 4px 4px 0; }
+.achs { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.ach { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; opacity: .55; display: flex; flex-direction: column; gap: 3px; }
+.ach.got { opacity: 1; border-color: #8d6e00; background: linear-gradient(180deg, #3a3010, var(--panel)); }
+.ach small { color: var(--muted); }
+textarea.code { width: 100%; height: 110px; background: #0b1220; color: var(--text); border: 1px solid var(--line); border-radius: 8px; font-family: monospace; font-size: 11px; padding: 8px; }
+
+/* ---------- горка */
+#ride-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.ride-top { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.ride-top .btn { background: #000a; border-color: #ffffff22; padding: 6px 12px; }
+.build-bar { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #0b1220dd; padding: 8px; border-radius: 12px; border: 1px solid var(--line); }
+.build-bar button { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; font-size: 14px; }
+.build-bar button.active { background: var(--accent); color: #062033; font-weight: 700; }
+.build-bar button.danger { background: #5c1a1a; }
+.build-bar .snow { margin: 0 6px; font-size: 14px; }
+#b-left { margin-left: auto; }
+#b-left, #b-right { padding: 7px 16px; font-size: 18px; }
+
+.touch { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: flex-end; padding: 10px; pointer-events: none; gap: 6px; }
+.touch > div { display: flex; gap: 8px; pointer-events: auto; }
+.touch .tc { flex-wrap: wrap; justify-content: center; max-width: 260px; gap: 6px; }
+.touch .tr { flex-direction: column; align-items: flex-end; }
+.touch button { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #ffffff55; background: #0007; color: #fff; font-size: 24px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.touch .tc button { width: 46px; height: 46px; font-size: 20px; }
+.touch button.sm { width: 74px; height: 40px; border-radius: 20px; font-size: 14px; }
+.touch button.wide { width: 110px; height: 64px; border-radius: 32px; font-size: 18px; font-weight: 700; background: #f4511e99; }
+.touch button.on { background: #4fc3f799; transform: scale(.94); }
+
+/* ---------- оверлеи */
+.overlay { position: fixed; inset: 0; background: #000b; display: flex; align-items: center; justify-content: center; z-index: 50; padding: 10px; }
+#modal { z-index: 60; }
+.modal-win { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px #000a; animation: pop .18s ease-out; }
+.modal-win h2 { margin: 0 0 10px; }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 14px; }
+@keyframes pop { from { transform: scale(.92); opacity: 0; } }
+.summary { text-align: center; display: flex; flex-direction: column; gap: 6px; }
+.big-num { font-size: 44px; font-weight: 800; }
+.big-num small { font-size: 15px; font-weight: 400; color: var(--muted); }
+.coins-earned { font-size: 30px; font-weight: 800; color: var(--gold); margin-top: 6px; }
+table.keys { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.keys td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+kbd { background: #0b1220; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 5px; padding: 1px 6px; font-size: 12px; }
+
+.mg-win { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; width: min(1200px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.mg-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.mg-head h2 { margin: 0; font-size: 18px; }
+.mg-main { display: flex; gap: 10px; padding: 10px; min-height: 0; flex: 1; }
+#mg-canvas { flex: 1 1 auto; min-width: 0; max-width: 800px; width: 100%; aspect-ratio: 16 / 9; height: auto; border-radius: 10px; touch-action: none; background: #000; align-self: flex-start; }
+.mg-info { width: 300px; flex: none; overflow-y: auto; font-size: 14px; max-height: 60vh; }
+.mg-sec { background: var(--panel2); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+.mg-sec .hint { margin: 4px 0 0; padding-left: 18px; }
+.mg-sec .hint li { margin: 2px 0; }
+.res-row { display: flex; gap: 14px; }
+.mg-log div { font-size: 13px; padding: 4px 8px; border-left: 3px solid var(--line); margin-bottom: 4px; }
+.mg-log div:first-child { border-color: var(--accent); background: #0003; }
+.mg-log .good { border-color: var(--good) !important; color: var(--good); }
+.mg-log .bad { border-color: var(--bad) !important; color: #ff8a80; }
+.mg-log .warn { border-color: var(--gold) !important; color: #ffe082; }
+.mg-btns { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 12px 12px; }
+.mg-btns .btn { font-size: 15px; padding: 10px 16px; }
+.mg-sliders { display: flex; flex-direction: column; gap: 10px; background: var(--panel2); border-radius: 10px; padding: 10px; }
+.mg-sliders label { display: flex; flex-direction: column; gap: 6px; }
+.mg-sliders input { width: 100%; }
+@media (max-width: 900px) {
+  .mg-main { flex-direction: column; overflow-y: auto; }
+  .mg-info { width: 100%; max-height: none; }
+  #mg-canvas { max-width: 100%; }
+}
+
+#toasts { position: fixed; top: 58px; left: 50%; transform: translateX(-50%); align-items: center; display: flex; flex-direction: column; gap: 8px; z-index: 80; pointer-events: none; max-width: min(360px, calc(100vw - 24px)); }
+.toast { background: #1f2c48f2; border: 1px solid var(--line); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 10px; font-size: 14px; box-shadow: 0 6px 20px #0008; animation: slide .25s ease-out; transition: opacity .4s, transform .4s; }
+.toast.good { border-left-color: var(--good); }
+.toast.bad { border-left-color: var(--bad); }
+.toast.ach { border-left-color: var(--gold); background: #3a3010f2; }
+.toast.out { opacity: 0; transform: translateY(-20px); }
+@keyframes slide { from { transform: translateY(-20px); opacity: 0; } }
+
+/* телефон горизонтально: мини-игра должна влезать по высоте */
+@media (max-height: 540px) {
+  .overlay { padding: 4px; }
+  .mg-head { padding: 4px 10px; }
+  .mg-head h2 { font-size: 15px; }
+  .mg-main { flex-direction: row; padding: 6px; gap: 6px; overflow: hidden; }
+  #mg-canvas { width: auto; height: calc(100vh - 110px); max-width: 64vw; }
+  .mg-info { width: auto; flex: 1; min-width: 150px; max-height: calc(100vh - 110px); font-size: 12px; }
+  .mg-btns { padding: 4px 8px 6px; gap: 5px; }
+  .mg-btns .btn { padding: 6px 10px; font-size: 13px; }
+  .topbar { padding: 6px 12px; }
+  .g-body { padding: 8px 10px 30px; }
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Титульный экран -->
+  <section id="scr-title" class="screen active">
+    <div class="title-snow"></div>
+    <div class="title-box">
+      <div class="title-icon">🛷</div>
+      <h1>СНЕГОКАТ</h1>
+      <p class="sub">гаражный тюнинг · горки · сальто · бензопила</p>
+      <button id="t-continue" class="btn big primary">▶ Играть</button>
+      <p class="small muted">Клавиатура или сенсорный экран. На телефоне лучше горизонтально.</p>
+    </div>
+  </section>
+
+  <!-- Гараж -->
+  <section id="scr-garage" class="screen">
+    <header class="topbar">
+      <div class="logo">🛷 <span>Гараж</span></div>
+      <div class="coins">🪙 <span id="g-coins">0</span></div>
+      <button id="btn-go" class="btn primary">На горку! ▶</button>
+    </header>
+    <nav id="g-tabs" class="tabs">
+      <button data-tab="sled">🛷 Снегокат</button>
+      <button data-tab="electro">🔥 Электроника</button>
+      <button data-tab="motor">🪚 Мотор</button>
+      <button data-tab="shop">🛒 Магазин</button>
+      <button data-tab="ach">🏆 Достижения</button>
+      <button data-tab="settings">⚙️</button>
+    </nav>
+    <main id="g-body" class="g-body"></main>
+  </section>
+
+  <!-- Горка -->
+  <section id="scr-ride" class="screen">
+    <canvas id="ride-canvas"></canvas>
+    <div class="ride-top">
+      <button id="r-garage" class="btn">🏠 Гараж</button>
+      <button id="r-build" class="btn">🪏 Стройка</button>
+      <button id="r-night" class="btn">🌙 Ночь</button>
+      <button id="r-light" class="btn">🔦</button>
+      <button id="r-restart" class="btn">↺</button>
+    </div>
+    <div id="build-bar" class="build-bar hidden">
+      <button data-tool="raise">⬆️ Насыпать</button>
+      <button data-tool="dig">⬇️ Копать</button>
+      <button data-tool="smooth">〰️ Сгладить</button>
+      <button data-tool="kicker">📐 Кикер</button>
+      <button data-tool="bigkicker">🚀 Большой кикер</button>
+      <button data-tool="landing">🛬 Приземлялка</button>
+      <button data-tool="ice">🧊 Залить лёд</button>
+      <button data-tool="unice">❄️ Убрать лёд</button>
+      <span class="snow">❄️ Снег: <b id="b-snow">0</b></span>
+      <button id="b-left">◀</button><button id="b-right">▶</button>
+      <button id="b-reset" class="danger">Сброс</button>
+    </div>
+    <div id="touch" class="touch hidden">
+      <div class="tl">
+        <button data-k="left">⟲</button>
+        <button data-k="right">⟳</button>
+      </div>
+      <div class="tc">
+        <button data-k="KeyZ">🦸</button>
+        <button data-k="KeyX">🙌</button>
+        <button data-k="KeyC">🦵</button>
+        <button data-k="KeyV">🤸</button>
+        <button data-k="sigL" data-need="turn">◀️</button>
+        <button data-k="horn" data-need="horn">📯</button>
+        <button data-k="sigR" data-need="turn">▶️</button>
+      </div>
+      <div class="tr">
+        <button data-k="brake" class="sm">тормоз</button>
+        <button data-k="gas" data-need="motor" class="sm">газ</button>
+        <button data-k="push" class="wide">толчок</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Мини-игры -->
+<div id="mg" class="overlay hidden">
+  <div class="mg-win">
+    <div class="mg-head"><h2 id="mg-title"></h2><button id="mg-close" class="btn">✕ Выйти</button></div>
+    <div class="mg-main">
+      <canvas id="mg-canvas" width="800" height="450"></canvas>
+      <div id="mg-info" class="mg-info"></div>
+    </div>
+    <div id="mg-btns" class="mg-btns"></div>
+  </div>
+</div>
+
+<!-- Модалка -->
+<div id="modal" class="overlay hidden">
+  <div class="modal-win">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div id="modal-btns" class="modal-btns"></div>
+  </div>
+</div>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+// ===== Общие помощники =====
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a, b) => a + Math.random() * (b - a);
+const randi = (a, b) => Math.floor(rand(a, b + 1));
+const TAU = Math.PI * 2;
+
+function wrapAngle(a) {
+  a = (a + Math.PI) % TAU;
+  if (a < 0) a += TAU;
+  return a - Math.PI;
+}
+function fmt(n) { return Math.floor(n).toLocaleString('ru-RU'); }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function dist(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
+function distToSeg(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const l2 = dx * dx + dy * dy || 1;
+  const t = clamp(((px - ax) * dx + (py - ay) * dy) / l2, 0, 1);
+  return { d: Math.hypot(px - (ax + dx * t), py - (ay + dy * t)), t };
+}
+function roundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+</script>
+<script>
+'use strict';
+// ===== Игровые данные: предметы, схемы, достижения, этапы мотора =====
+
+const CATS = {
+  radio: '📻 Радиодетали',
+  tools: '🧰 Инструмент и расходники',
+  auto: '⛽ Автозапчасти и ГСМ',
+  flea: '🏚️ Барахолка',
+  upgrade: '⭐ Улучшения',
+};
+
+const ITEMS = {
+  // --- радиодетали
+  battery: { name: 'Аккумулятор 18650', price: 60, cat: 'radio', icon: '🔋', desc: 'Литиевый, 3.7 В. Не замыкать плюс с минусом!' },
+  switch: { name: 'Тумблер', price: 15, cat: 'radio', icon: '🎚️', desc: 'Включил — горит, выключил — нет.' },
+  tact: { name: 'Тактовая кнопка', price: 8, cat: 'radio', icon: '🔘', desc: 'Замыкает, только пока нажата.' },
+  led_w: { name: 'Светодиод белый 1 Вт', price: 12, cat: 'radio', icon: '💡', desc: 'Яркий, для фары.' },
+  led_r: { name: 'Светодиод красный', price: 10, cat: 'radio', icon: '🔴' },
+  led_o: { name: 'Светодиод оранжевый', price: 10, cat: 'radio', icon: '🟠' },
+  res: { name: 'Резистор 100 Ом', price: 4, cat: 'radio', icon: '〰️', desc: 'Ограничивает ток. Без него светодиод сгорит.' },
+  strip: { name: 'Светодиодная RGB-лента', price: 90, cat: 'radio', icon: '🌈', desc: 'Резисторы уже встроены.' },
+  buzzer: { name: 'Пьезо-пищалка', price: 25, cat: 'radio', icon: '📢', desc: 'Полярная! Плюс к плюсу.' },
+  tilt: { name: 'Датчик наклона', price: 30, cat: 'radio', icon: '📐', desc: 'Шарик внутри замыкает контакты, если трясти.' },
+  micro: { name: 'Концевик (микрик)', price: 15, cat: 'radio', icon: '🖲️', desc: 'Срабатывает от тормозной ручки.' },
+  mcu: { name: 'Ардуинка Нано (клон)', price: 160, cat: 'radio', icon: '🧠', desc: 'Маленький компьютер.' },
+  oled: { name: 'OLED-дисплей 0.96"', price: 120, cat: 'radio', icon: '📟' },
+  hall: { name: 'Датчик Холла + магнит', price: 45, cat: 'radio', icon: '🧲', desc: 'Считает обороты по магниту.' },
+  bt: { name: 'Bluetooth-аудиомодуль', price: 90, cat: 'radio', icon: '📶' },
+  amp: { name: 'Усилитель PAM8403', price: 60, cat: 'radio', icon: '🎛️' },
+  spk: { name: 'Динамик 3 Вт', price: 55, cat: 'radio', icon: '🔈' },
+  // --- инструмент и расходники
+  solder: { name: 'Припой с канифолью', price: 30, cat: 'tools', icon: '🧵', pack: 10, unit: 'точек', desc: '10 точек пайки.' },
+  wire: { name: 'Провода', price: 20, cat: 'tools', icon: '〽️', pack: 5, unit: 'шт', desc: '5 проводков.' },
+  multimeter: { name: 'Мультиметр', price: 220, cat: 'tools', icon: '📟', tool: true, desc: 'Кнопка «Прозвонить»: найдёт ошибки и КЗ ДО включения.' },
+  station: { name: 'Паяльная станция', price: 450, cat: 'tools', icon: '🔥', tool: true, desc: 'Держит температуру: зона идеальной пайки шире.' },
+  // --- автозапчасти / ГСМ
+  wd40: { name: 'Проникающая смазка', price: 70, cat: 'auto', icon: '🧴', desc: 'Для закисших болтов.' },
+  carbclean: { name: 'Очиститель карбюратора', price: 80, cat: 'auto', icon: '🧯' },
+  plug: { name: 'Свеча зажигания', price: 60, cat: 'auto', icon: '⚡' },
+  carbkit: { name: 'Ремкомплект карбюратора', price: 120, cat: 'auto', icon: '🧩', desc: 'Мембраны и прокладки.' },
+  fuelhose: { name: 'Топливный шланг', price: 40, cat: 'auto', icon: '🪱' },
+  electrodes: { name: 'Электроды для сварки', price: 50, cat: 'auto', icon: '🥢', desc: 'Сварку даст сосед Петрович.' },
+  petrol: { name: 'Бензин АИ-92', price: 65, cat: 'auto', icon: '⛽', pack: 1000, unit: 'мл', desc: '1 литр.' },
+  oil: { name: 'Масло 2Т', price: 45, cat: 'auto', icon: '🛢️', pack: 100, unit: 'мл', desc: '100 мл. Для двухтактных моторов.' },
+  pistonkit: { name: 'Поршневая группа', price: 400, cat: 'auto', icon: '🔩', desc: 'Ремонт мотора, если его заклинило.' },
+  // --- барахолка
+  chainsaw: { name: 'Старая бензопила', price: 700, cat: 'flea', icon: '🪚', desc: '«Работала, когда ставили в сарай. Лет 15 назад.»' },
+  wheel: { name: 'Колесо с шипами', price: 350, cat: 'flea', icon: '🛞', desc: 'От детского квадроцикла. Шипы — саморезы.' },
+  chain: { name: 'Цепь', price: 150, cat: 'flea', icon: '⛓️' },
+  sprocket: { name: 'Звёздочка-заготовка', price: 120, cat: 'flea', icon: '⚙️', desc: 'Нужно выточить. Можно запороть.' },
+  metal: { name: 'Профиль и уголок', price: 180, cat: 'flea', icon: '📏', desc: 'Для рамы мотора.' },
+  // --- улучшения
+  wax: { name: 'Парафин для полозьев', price: 140, cat: 'upgrade', icon: '🕯️', tool: true, desc: 'Меньше трение — выше скорость.' },
+  grips: { name: 'Грипсы на руль', price: 70, cat: 'upgrade', icon: '✊', tool: true, desc: 'Сальто крутится быстрее.' },
+  seat: { name: 'Мягкое сиденье', price: 160, cat: 'upgrade', icon: '🛋️', tool: true, desc: 'Прощает кривые и жёсткие приземления.' },
+  shovel2: { name: 'Большая лопата', price: 200, cat: 'upgrade', icon: '🪏', tool: true, desc: 'Строить горку быстрее и шире.' },
+  bucket: { name: 'Ведро для заливки', price: 90, cat: 'upgrade', icon: '🪣', tool: true, desc: 'Заливай дорожки льдом — скользко и быстро!' },
+  bigtank: { name: 'Увеличенный бак', price: 250, cat: 'upgrade', icon: '🛢️', tool: true, desc: 'Бак 1.2 л вместо 0.5 л.' },
+  snow: { name: 'Самосвал снега', price: 100, cat: 'upgrade', icon: '🚚', desc: '+400 снега для стройки горок.' },
+};
+
+// ===== Электронные проекты (пайка) =====
+const PROJECTS = [
+  {
+    id: 'headlight', name: 'Фара', icon: '🔦', diff: 1,
+    desc: 'Аккумулятор, тумблер и яркий светодиод. Классика.',
+    effect: 'Свет ночью (клавиша L). Ночные заезды ×1.5 монет.',
+    parts: { battery: 1, switch: 1, led_w: 1 },
+    comps: [
+      { id: 'bat', t: 'battery', x: 190, y: 340 },
+      { id: 'sw', t: 'switch', x: 400, y: 140 },
+      { id: 'led', t: 'led', x: 620, y: 250, color: '#ffffff', label: 'Белый LED' },
+    ],
+    nets: [['bat.+', 'sw.1'], ['sw.2', 'led.A'], ['led.K', 'bat.-']],
+    hint: ['Плюс аккумулятора → тумблер', 'Тумблер → анод светодиода (A+)', 'Катод светодиода (K−) → минус аккумулятора'],
+  },
+  {
+    id: 'horn', name: 'Клаксон', icon: '📯', diff: 1,
+    desc: 'Тактовая кнопка и пищалка. Бип-бип!',
+    effect: 'Клаксон на клавишу H.',
+    parts: { battery: 1, tact: 1, buzzer: 1 },
+    comps: [
+      { id: 'bat', t: 'battery', x: 200, y: 350 },
+      { id: 'bt', t: 'tact', x: 400, y: 130 },
+      { id: 'bz', t: 'buzzer', x: 620, y: 260 },
+    ],
+    nets: [['bat.+', 'bt.1'], ['bt.2', 'bz.+'], ['bz.-', 'bat.-']],
+    hint: ['Плюс → кнопка', 'Кнопка → плюс пищалки', 'Минус пищалки → минус аккумулятора'],
+  },
+  {
+    id: 'stoplight', name: 'Стоп-сигнал', icon: '🛑', diff: 2,
+    desc: 'Концевик на тормозе зажигает красный светодиод. Не забудь резистор!',
+    effect: 'Красный свет при торможении (S / ↓).',
+    parts: { battery: 1, micro: 1, res: 1, led_r: 1 },
+    comps: [
+      { id: 'bat', t: 'battery', x: 180, y: 360 },
+      { id: 'mic', t: 'micro', x: 180, y: 130 },
+      { id: 'r', t: 'res', x: 430, y: 140 },
+      { id: 'led', t: 'led', x: 650, y: 250, color: '#ff1744', label: 'Красный LED' },
+    ],
+    nets: [['bat.+', 'mic.1'], ['mic.2', 'r.1'], ['r.2', 'led.A'], ['led.K', 'bat.-']],
+    hint: ['Плюс → концевик', 'Концевик → резистор', 'Резистор → анод (A+)', 'Катод (K−) → минус'],
+  },
+  {
+    id: 'underglow', name: 'Подсветка днища', icon: '🌈', diff: 1,
+    desc: 'RGB-лента под рамой. Цвет выбирается в гараже.',
+    effect: 'Неоновое свечение. +10% монет за стиль.',
+    parts: { battery: 1, switch: 1, strip: 1 },
+    comps: [
+      { id: 'bat', t: 'battery', x: 190, y: 350 },
+      { id: 'sw', t: 'switch', x: 170, y: 120 },
+      { id: 'st', t: 'strip', x: 540, y: 250 },
+    ],
+    nets: [['bat.+', 'sw.1'], ['sw.2', 'st.+'], ['st.-', 'bat.-']],
+    hint: ['Плюс → тумблер', 'Тумблер → плюс ленты', 'Минус ленты → минус аккумулятора'],
+  },
+  {
+    id: 'turn', name: 'Поворотники', icon: '↔️', diff: 3,
+    desc: 'Две тактовые кнопки, два оранжевых светодиода и два резистора.',
+    effect: 'Поворотники на Q / E. Показал поворот перед трамплином — бонус!',
+    parts: { battery: 1, tact: 2, res: 2, led_o: 2 },
+    comps: [
+      { id: 'bat', t: 'battery', x: 400, y: 395 },
+      { id: 'bl', t: 'tact', x: 100, y: 200, label: 'Кнопка Л' },
+      { id: 'br', t: 'tact', x: 700, y: 200, label: 'Кнопка П' },
+      { id: 'rl', t: 'res', x: 250, y: 90 },
+      { id: 'rr', t: 'res', x: 550, y: 90 },
+      { id: 'll', t: 'led', x: 310, y: 230, color: '#ff9100', label: 'LED Л' },
+      { id: 'lr', t: 'led', x: 490, y: 230, color: '#ff9100', label: 'LED П' },
+    ],
+    nets: [['bat.+', 'bl.1', 'br.1'], ['bl.2', 'rl.1'], ['rl.2', 'll.A'], ['br.2', 'rr.1'], ['rr.2', 'lr.A'], ['ll.K', 'lr.K', 'bat.-']],
+    hint: ['Плюс → обе кнопки', 'Кнопка Л → резистор → анод LED Л', 'Кнопка П → резистор → анод LED П', 'Оба катода (K−) → минус'],
+  },
+  {
+    id: 'alarm', name: 'Сигнализация', icon: '🚨', diff: 3,
+    desc: 'Датчик наклона + пищалка + красный индикатор. Если тронут снегокат — орёт.',
+    effect: 'Защищает гараж от воришек. Мигающий светодиод на раме.',
+    parts: { battery: 1, switch: 1, tilt: 1, buzzer: 1, res: 1, led_r: 1 },
+    comps: [
+      { id: 'bat', t: 'battery', x: 400, y: 400 },
+      { id: 'sw', t: 'switch', x: 110, y: 130 },
+      { id: 'tl', t: 'tilt', x: 330, y: 110 },
+      { id: 'r', t: 'res', x: 560, y: 110 },
+      { id: 'led', t: 'led', x: 700, y: 210, color: '#ff1744', label: 'Индикатор' },
+      { id: 'bz', t: 'buzzer', x: 330, y: 250 },
+    ],
+    nets: [['bat.+', 'sw.1'], ['sw.2', 'tl.1', 'r.1'], ['r.2', 'led.A'], ['tl.2', 'bz.+'], ['bz.-', 'led.K', 'bat.-']],
+    hint: ['Плюс → тумблер (взвод)', 'Тумблер → датчик наклона И резистор', 'Резистор → анод индикатора', 'Датчик → плюс пищалки', 'Минус пищалки, катод индикатора → минус'],
+  },
+  {
+    id: 'speedo', name: 'Спидометр', icon: '⏱️', diff: 4, firmware: true,
+    desc: 'Ардуинка, дисплей и датчик Холла. Потом прошивка.',
+    effect: 'Скорость на экране и рекорд скорости.',
+    parts: { battery: 1, mcu: 1, oled: 1, hall: 1 },
+    comps: [
+      { id: 'bat', t: 'battery', x: 150, y: 120 },
+      { id: 'mcu', t: 'mcu', x: 400, y: 330, label: 'Ардуинка' },
+      { id: 'dsp', t: 'oled', x: 420, y: 110, label: 'Дисплей' },
+      { id: 'hl', t: 'hall', x: 690, y: 170, label: 'Холл' },
+    ],
+    nets: [['bat.+', 'mcu.VIN'], ['bat.-', 'mcu.GND', 'dsp.GND', 'hl.GND'], ['mcu.5V', 'dsp.VCC', 'hl.VCC'], ['hl.OUT', 'mcu.D2'], ['dsp.SDA', 'mcu.A4'], ['dsp.SCL', 'mcu.A5']],
+    hint: ['Плюс → VIN ардуинки', 'Минус → GND ардуинки, дисплея и датчика', '5V ардуинки → VCC дисплея и датчика', 'OUT датчика → D2', 'SDA → A4, SCL → A5'],
+  },
+  {
+    id: 'speaker', name: 'Колонка', icon: '🎵', diff: 4,
+    desc: 'Bluetooth-модуль, усилитель и динамик. Музыка на горке!',
+    effect: 'Музыка во время заезда. +10% монет.',
+    parts: { battery: 1, switch: 1, bt: 1, amp: 1, spk: 1 },
+    comps: [
+      { id: 'bat', t: 'battery', x: 150, y: 400 },
+      { id: 'sw', t: 'switch', x: 110, y: 150 },
+      { id: 'bt', t: 'bt', x: 340, y: 120, label: 'BT-модуль' },
+      { id: 'amp', t: 'amp', x: 560, y: 200, label: 'Усилитель' },
+      { id: 'sp', t: 'spk', x: 700, y: 340 },
+    ],
+    nets: [['bat.+', 'sw.1'], ['sw.2', 'bt.VCC', 'amp.VCC'], ['bat.-', 'bt.GND', 'amp.GND'], ['bt.OUT', 'amp.IN'], ['amp.O+', 'sp.+'], ['amp.O-', 'sp.-']],
+    hint: ['Плюс → тумблер', 'Тумблер → VCC модуля и усилителя', 'Минус → GND модуля и усилителя', 'OUT модуля → IN усилителя', 'O+ → плюс динамика, O− → минус'],
+  },
+];
+
+// ===== Этапы сборки мотора =====
+const MOTOR_STAGES = [
+  { id: 'buy', name: 'Притащить пилу', icon: '🪚', req: { chainsaw: 1 }, desc: 'Купи старую бензопилу на барахолке и притащи в гараж.' },
+  { id: 'bolts', name: 'Разборка', icon: '🔧', req: { wd40: 1 }, desc: 'Открути болты крышки. Ржавые сначала побрызгай смазкой и подожди — иначе сорвёшь грани!' },
+  { id: 'clean', name: 'Чистка карбюратора', icon: '🧽', req: { carbclean: 1 }, desc: 'Отмой 15 лет грязи и продуй жиклёр.' },
+  { id: 'parts', name: 'Замена свечи и мембран', icon: '⚡', req: { plug: 1, carbkit: 1, fuelhose: 1 }, desc: 'Поставь новые детали на места и выставь зазор свечи.' },
+  { id: 'lathe', name: 'Вал и звёздочка', icon: '⚙️', req: { sprocket: 1 }, desc: 'Выточи звёздочку на токарном станке. Три промаха — заготовка в брак!' },
+  { id: 'weld', name: 'Рама и крепление', icon: '🔥', req: { metal: 1, electrodes: 1 }, desc: 'Свари раму для мотора. Веди электрод ровно по шву.' },
+  { id: 'chain', name: 'Колесо и цепь', icon: '🛞', req: { wheel: 1, chain: 1 }, desc: 'Поставь колесо, натяни цепь и выставь соосность.' },
+  { id: 'start', name: 'Первый запуск', icon: '🔥', req: {}, fuel: 60, desc: 'Залей смесь в бак. Подсос, дёргай стартер, не залей свечу!' },
+  { id: 'tune', name: 'Регулировка карбюратора', icon: '🎛️', req: {}, fuel: 40, desc: 'Винты L и H. Ровный холостой и максимум оборотов без перегрева.' },
+];
+
+// ===== Достижения =====
+const ACH = [
+  { id: 'first_ride', name: 'Первый заезд', desc: 'Скатиться с горки', reward: 20 },
+  { id: 'first_flip', name: 'Сальтуха!', desc: 'Сделать сальто и приземлиться', reward: 60 },
+  { id: 'double', name: 'Двойное', desc: 'Двойное сальто', reward: 150 },
+  { id: 'triple', name: 'Легенда двора', desc: 'Тройное сальто', reward: 400 },
+  { id: 'big_air', name: 'Полёт нормальный', desc: 'Провести в воздухе 2 секунды', reward: 100 },
+  { id: 'long_jump', name: 'Дальнобой', desc: 'Прыжок дальше 20 метров', reward: 150 },
+  { id: 'combo3', name: 'Комбо-мастер', desc: '3 разных трюка за один прыжок', reward: 200 },
+  { id: 'crash10', name: 'Каскадёр', desc: 'Упасть 10 раз', reward: 50 },
+  { id: 'first_solder', name: 'Паяльщик', desc: 'Собрать первую схему', reward: 30 },
+  { id: 'short', name: 'Бабах!', desc: 'Устроить короткое замыкание', reward: 10 },
+  { id: 'all_electro', name: 'Главный по электронике', desc: 'Установить всю электронику', reward: 500 },
+  { id: 'night', name: 'Ночной гонщик', desc: 'Ночной заезд с включённой фарой', reward: 60 },
+  { id: 'signal', name: 'Вежливый водитель', desc: 'Показать поворотник перед прыжком', reward: 30 },
+  { id: 'builder', name: 'Архитектор', desc: 'Перекидать лопатой 1000 снега', reward: 80 },
+  { id: 'motor', name: 'Моторизация', desc: 'Собрать мотор из бензопилы', reward: 1000 },
+  { id: 'climb', name: 'Сам заехал', desc: 'Заехать на моторе обратно на стартовую горку', reward: 200 },
+  { id: 'speed', name: 'Ракета', desc: 'Разогнаться до 50 км/ч (нужен спидометр)', reward: 200 },
+  { id: 'thief', name: 'Сигналка спасла', desc: 'Сигнализация спугнула воришку', reward: 50 },
+  { id: 'rich', name: 'Богач', desc: 'Накопить 3000 монет', reward: 0 },
+];
+
+const PAINTS = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#ff6d00', '#212121', '#eceff1', '#00bfa5', '#f06292'];
+const GLOWS = ['#00e5ff', '#ff00e5', '#76ff03', '#ffea00', '#ff3d00', '#651fff', '#ffffff'];
+
+const TRICKS = {
+  KeyZ: { name: 'Супермен', pose: 'superman', rate: 420 },
+  KeyX: { name: 'Без рук', pose: 'nohands', rate: 260 },
+  KeyC: { name: 'Канкан', pose: 'kankan', rate: 300 },
+  KeyV: { name: 'Шпагат', pose: 'split', rate: 460 },
+};
+
+</script>
+<script>
+'use strict';
+// ===== Сохранение прогресса (localStorage) =====
+const SAVE_KEY = 'snegokat_save_v1';
+let S = null;
+
+function defaultSave() {
+  return {
+    v: 1,
+    coins: 150,
+    // стартовый набор от деда: всё на первую фару
+    inv: { solder: 12, wire: 6, battery: 1, switch: 1, led_w: 1 },
+    tools: { iron: true },
+    mods: {},
+    modOn: { headlight: true, underglow: true, speaker: true },
+    paint: '#e53935',
+    glow: '#00e5ff',
+    motor: { stage: 0, done: false, health: 100 },
+    tank: { fuel: 0, oil: 0 },
+    terrain: null,
+    ice: null,
+    snow: 600,
+    snowMoved: 0,
+    stats: { runs: 0, best: 0, bestAir: 0, bestDist: 0, maxSpeed: 0, flips: 0, earned: 0, crashes: 0, solders: 0, playTime: 0 },
+    ach: {},
+    settings: { sound: true, music: true, night: false },
+    created: Date.now(),
+    saved: 0,
+  };
+}
+
+function deepMerge(base, data) {
+  for (const k in data) {
+    if (data[k] && typeof data[k] === 'object' && !Array.isArray(data[k]) && base[k] && typeof base[k] === 'object' && !Array.isArray(base[k])) {
+      deepMerge(base[k], data[k]);
+    } else {
+      base[k] = data[k];
+    }
+  }
+  return base;
+}
+
+const Save = {
+  timer: null,
+  has() {
+    try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+  },
+  load() {
+    S = defaultSave();
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (raw) deepMerge(S, JSON.parse(raw));
+    } catch (e) { console.warn('save load failed', e); }
+    return S;
+  },
+  save() {
+    if (!S) return;
+    clearTimeout(this.timer); this.timer = null;
+    S.saved = Date.now();
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { console.warn('save failed', e); }
+  },
+  dirty() {
+    if (this.timer) return;
+    this.timer = setTimeout(() => this.save(), 400);
+  },
+  reset() {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+    S = defaultSave();
+    this.save();
+  },
+  exportCode() {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+  },
+  importCode(code) {
+    const data = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    if (!data || typeof data !== 'object' || data.v !== 1) throw new Error('bad save');
+    S = deepMerge(defaultSave(), data);
+    this.save();
+  },
+};
+
+// сохраняемся при выходе / сворачивании
+window.addEventListener('beforeunload', () => { if (typeof Ride !== 'undefined') Ride.persist(); Save.save(); });
+window.addEventListener('pagehide', () => { if (typeof Ride !== 'undefined') Ride.persist(); Save.save(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (typeof Ride !== 'undefined') Ride.persist(); Save.save(); }
+});
+setInterval(() => { if (S) { S.stats.playTime += 5; Save.save(); } }, 5000);
+
+</script>
+<script>
+'use strict';
+// ===== Звук на WebAudio (без файлов) =====
+const Sfx = {
+  ctx: null, master: null, noiseBuf: null,
+  engine: null, sizzle: null, musicTimer: null, alarmTimer: null,
+
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.45;
+      this.master.connect(this.ctx.destination);
+      const len = this.ctx.sampleRate;
+      this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+      const d = this.noiseBuf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    } catch (e) { this.ctx = null; }
+  },
+  ok() { return this.ctx && S && S.settings.sound; },
+
+  tone(f, d = 0.1, type = 'square', v = 0.15, slide = 0, delay = 0) {
+    if (!this.ok()) return;
+    const t = this.ctx.currentTime + delay;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, f + slide), t + d);
+    g.gain.setValueAtTime(v, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(this.master);
+    o.start(t); o.stop(t + d + 0.02);
+  },
+  noise(d = 0.2, v = 0.3, freq = 1000, type = 'lowpass', delay = 0) {
+    if (!this.ok()) return;
+    const t = this.ctx.currentTime + delay;
+    const s = this.ctx.createBufferSource(); s.buffer = this.noiseBuf;
+    const f = this.ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(f); f.connect(g); g.connect(this.master);
+    s.start(t, Math.random() * 0.5); s.stop(t + d + 0.02);
+  },
+
+  click() { this.tone(900, 0.04, 'square', 0.05); },
+  coin() { this.tone(988, 0.08, 'square', 0.1); this.tone(1319, 0.18, 'square', 0.1, 0, 0.08); },
+  buy() { this.tone(660, 0.06, 'triangle', 0.15); this.tone(880, 0.12, 'triangle', 0.15, 0, 0.06); },
+  error() { this.tone(200, 0.15, 'sawtooth', 0.1); this.tone(150, 0.2, 'sawtooth', 0.1, 0, 0.12); },
+  success() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.15, 'triangle', 0.15, 0, i * 0.09)); },
+  land(hard = 0.5) { this.noise(0.25, 0.25 + hard * 0.3, 500); },
+  whoosh() { this.noise(0.4, 0.15, 1800, 'bandpass'); },
+  crash() { this.noise(0.6, 0.5, 400); this.tone(120, 0.4, 'sawtooth', 0.12, -60); },
+  trick() { this.tone(700, 0.08, 'triangle', 0.12, 300); },
+  spark() { this.noise(0.12, 0.25, 4000, 'highpass'); },
+  bang() { this.noise(0.5, 0.6, 2500); this.tone(80, 0.4, 'square', 0.2, -40); },
+  pop() { this.noise(0.12, 0.5, 900); this.tone(90, 0.1, 'square', 0.15); },
+  ratchet() { this.tone(300 + Math.random() * 80, 0.03, 'square', 0.06); },
+  hornTone() { this.tone(440, 0.25, 'square', 0.12); this.tone(554, 0.25, 'square', 0.1); },
+  alarm(dur = 2.5) {
+    if (!this.ok()) return;
+    for (let i = 0; i < dur * 4; i++) this.tone(i % 2 ? 1400 : 900, 0.24, 'square', 0.08, i % 2 ? -500 : 500, i * 0.25);
+  },
+
+  // непрерывный шипящий звук паяльника
+  setSizzle(on) {
+    if (!this.ok()) on = false;
+    if (on && !this.sizzle) {
+      const s = this.ctx.createBufferSource(); s.buffer = this.noiseBuf; s.loop = true;
+      const f = this.ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 3500;
+      const g = this.ctx.createGain(); g.gain.value = 0.08;
+      s.connect(f); f.connect(g); g.connect(this.master); s.start();
+      this.sizzle = { s, g };
+    } else if (!on && this.sizzle) {
+      try { this.sizzle.s.stop(); } catch (e) {}
+      this.sizzle = null;
+    }
+  },
+
+  // мотор: rpm 0..1, run — работает ли
+  setEngine(run, rpm = 0) {
+    if (!this.ok()) run = false;
+    if (run && !this.engine) {
+      const c = this.ctx;
+      const o1 = c.createOscillator(); o1.type = 'sawtooth';
+      const o2 = c.createOscillator(); o2.type = 'square';
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+      const g = c.createGain(); g.gain.value = 0;
+      o1.connect(f); o2.connect(f); f.connect(g); g.connect(this.master);
+      o1.start(); o2.start();
+      this.engine = { o1, o2, f, g };
+    }
+    if (!this.engine) return;
+    const t = this.ctx.currentTime;
+    if (!run) {
+      this.engine.g.gain.setTargetAtTime(0, t, 0.05);
+      const e = this.engine; this.engine = null;
+      setTimeout(() => { try { e.o1.stop(); e.o2.stop(); } catch (er) {} }, 300);
+      return;
+    }
+    const base = 38 + rpm * 160 + Math.random() * 4;
+    this.engine.o1.frequency.setTargetAtTime(base, t, 0.04);
+    this.engine.o2.frequency.setTargetAtTime(base * 0.5, t, 0.04);
+    this.engine.f.frequency.setTargetAtTime(500 + rpm * 1800, t, 0.05);
+    this.engine.g.gain.setTargetAtTime(0.06 + rpm * 0.06, t, 0.05);
+  },
+
+  // простенькая чиптюн-музыка из колонки
+  startMusic() {
+    if (this.musicTimer || !this.ok() || !S.settings.music) return;
+    const mel = [76, 0, 79, 76, 74, 72, 74, 76, 0, 72, 69, 72, 74, 0, 71, 67, 76, 0, 79, 81, 79, 76, 74, 72, 74, 76, 79, 76, 74, 72, 0, 0];
+    const bass = [45, 45, 52, 52, 41, 41, 48, 48];
+    let step = 0;
+    const midi = n => 440 * Math.pow(2, (n - 69) / 12);
+    this.musicTimer = setInterval(() => {
+      if (!this.ok()) return;
+      const n = mel[step % mel.length];
+      if (n) this.tone(midi(n), 0.16, 'square', 0.035);
+      if (step % 4 === 0) this.tone(midi(bass[(step / 4) % bass.length]), 0.3, 'triangle', 0.08);
+      if (step % 2 === 0) this.noise(0.04, 0.04, 6000, 'highpass');
+      step++;
+    }, 150);
+  },
+  stopMusic() { clearInterval(this.musicTimer); this.musicTimer = null; },
+};
+
+</script>
+<script>
+'use strict';
+// ===== Тосты, модальные окна, раннер мини-игр =====
+const UI = {
+  toast(msg, type = '') {
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.innerHTML = msg;
+    $('#toasts').appendChild(t);
+    setTimeout(() => t.classList.add('out'), 2600);
+    setTimeout(() => t.remove(), 3100);
+  },
+  // buttons: [{label, cls, onClick, keep}]
+  modal(title, html, buttons = [{ label: 'OK' }]) {
+    $('#modal-title').innerHTML = title;
+    $('#modal-body').innerHTML = html;
+    const box = $('#modal-btns');
+    box.innerHTML = '';
+    buttons.forEach(b => {
+      const el = document.createElement('button');
+      el.className = 'btn ' + (b.cls || '');
+      el.innerHTML = b.label;
+      el.onclick = () => {
+        Sfx.click();
+        if (!b.keep) UI.closeModal();
+        if (b.onClick) b.onClick();
+      };
+      box.appendChild(el);
+    });
+    $('#modal').classList.remove('hidden');
+  },
+  closeModal() { $('#modal').classList.add('hidden'); },
+  modalOpen() { return !$('#modal').classList.contains('hidden'); },
+};
+
+// Раннер мини-игр: игра — объект с методами start(api), update(dt), draw(ctx), down/move/up(x,y), key(code), exit()
+const MG = {
+  game: null, raf: 0, last: 0,
+  init() {
+    this.cv = $('#mg-canvas');
+    this.ctx = this.cv.getContext('2d');
+    const pos = e => {
+      const r = this.cv.getBoundingClientRect();
+      return [(e.clientX - r.left) * this.cv.width / r.width, (e.clientY - r.top) * this.cv.height / r.height];
+    };
+    this.cv.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      this.cv.setPointerCapture(e.pointerId);
+      const [x, y] = pos(e);
+      this.game && this.game.down && this.game.down(x, y);
+    });
+    this.cv.addEventListener('pointermove', e => {
+      const [x, y] = pos(e);
+      this.game && this.game.move && this.game.move(x, y, e.buttons > 0 || e.pointerType === 'touch');
+    });
+    const up = e => { const [x, y] = pos(e); this.game && this.game.up && this.game.up(x, y); };
+    this.cv.addEventListener('pointerup', up);
+    this.cv.addEventListener('pointercancel', up);
+    $('#mg-close').onclick = () => this.close(true);
+    window.addEventListener('keydown', e => {
+      if (!this.game) return;
+      if (e.code === 'Escape') { this.close(true); return; }
+      if (this.game.key) { this.game.key(e.code); e.preventDefault(); }
+    });
+  },
+  open(title, game) {
+    this.game = game;
+    $('#mg-title').textContent = title;
+    $('#mg-info').innerHTML = '';
+    $('#mg-btns').innerHTML = '';
+    $('#mg').classList.remove('hidden');
+    const api = {
+      info: html => { $('#mg-info').innerHTML = html; },
+      buttons: list => this.setButtons(list),
+      close: () => this.close(false),
+    };
+    game.start(api);
+    this.last = performance.now();
+    cancelAnimationFrame(this.raf);
+    const loop = now => {
+      if (!this.game) return;
+      const dt = Math.min(0.05, (now - this.last) / 1000);
+      this.last = now;
+      this.game.update && this.game.update(dt);
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+      this.game.draw(this.ctx);
+      this.raf = requestAnimationFrame(loop);
+    };
+    this.raf = requestAnimationFrame(loop);
+  },
+  setButtons(list) {
+    const box = $('#mg-btns');
+    box.innerHTML = '';
+    list.forEach(b => {
+      const el = document.createElement('button');
+      el.className = 'btn ' + (b.cls || '') + (b.active ? ' active' : '');
+      el.innerHTML = b.label;
+      el.disabled = !!b.disabled;
+      if (b.hold) {
+        el.addEventListener('pointerdown', e => { e.preventDefault(); b.hold(true); });
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => el.addEventListener(ev, () => b.hold(false)));
+      } else {
+        el.onclick = () => { Sfx.click(); b.onClick && b.onClick(); };
+      }
+      box.appendChild(el);
+    });
+  },
+  close(byUser) {
+    if (!this.game) return;
+    const g = this.game;
+    this.game = null;
+    cancelAnimationFrame(this.raf);
+    Sfx.setSizzle(false);
+    Sfx.setEngine(false);
+    $('#mg').classList.add('hidden');
+    if (g.exit) g.exit(byUser);
+    Save.dirty();
+    if (typeof Garage !== 'undefined') Garage.render();
+  },
+};
+
+</script>
+<script>
+'use strict';
+// ===== Рисование снегоката и наездника (локальные координаты, ось Y вверх, земля y=0) =====
+const POSES = {
+  sit:      { hip: [-16, 32], sh: [-6, 60], head: [-2, 72], el: [5, 50], hand: [14, 53], el2: [3, 49], hand2: [12, 52], kn: [6, 40], ft: [16, 28], kn2: [3, 38], ft2: [13, 27] },
+  lean:     { hip: [-14, 32], sh: [2, 56], head: [8, 66], el: [8, 47], hand: [14, 53], el2: [6, 46], hand2: [12, 52], kn: [6, 40], ft: [16, 28], kn2: [3, 38], ft2: [13, 27] },
+  back:     { hip: [-18, 32], sh: [-14, 60], head: [-12, 72], el: [0, 52], hand: [14, 53], el2: [-2, 51], hand2: [12, 52], kn: [6, 40], ft: [16, 28], kn2: [3, 38], ft2: [13, 27] },
+  push:     { hip: [-16, 32], sh: [-4, 58], head: [0, 70], el: [5, 50], hand: [14, 53], el2: [3, 49], hand2: [12, 52], kn: [6, 40], ft: [16, 28], kn2: [-10, 18], ft2: [-18, 0] },
+  superman: { hip: [-34, 52], sh: [-6, 57], head: [4, 62], el: [4, 52], hand: [14, 53], el2: [3, 51], hand2: [12, 52], kn: [-56, 55], ft: [-80, 58], kn2: [-56, 50], ft2: [-80, 52] },
+  nohands:  { hip: [-16, 32], sh: [-8, 60], head: [-5, 72], el: [-1, 76], hand: [6, 92], el2: [-18, 74], hand2: [-24, 90], kn: [6, 40], ft: [16, 28], kn2: [3, 38], ft2: [13, 27] },
+  kankan:   { hip: [-18, 32], sh: [-10, 60], head: [-7, 72], el: [5, 50], hand: [14, 53], el2: [3, 49], hand2: [12, 52], kn: [10, 54], ft: [32, 68], kn2: [3, 38], ft2: [13, 27] },
+  split:    { hip: [-12, 42], sh: [-4, 68], head: [0, 80], el: [6, 58], hand: [14, 53], el2: [4, 57], hand2: [12, 52], kn: [10, 52], ft: [34, 62], kn2: [-34, 48], ft2: [-58, 58] },
+  sprawl:   { hip: [0, 0], sh: [26, 0], head: [38, 2], el: [30, 14], hand: [40, 22], el2: [30, -14], hand2: [40, -22], kn: [-20, 8], ft: [-40, 14], kn2: [-20, -8], ft2: [-40, -14] },
+};
+const JOINTS = Object.keys(POSES.sit);
+
+const Sled = {
+  makeJoints(pose = 'sit') {
+    const j = {};
+    for (const k of JOINTS) j[k] = POSES[pose][k].slice();
+    return j;
+  },
+  blendJoints(j, pose, k) {
+    const t = POSES[pose] || POSES.sit;
+    for (const n of JOINTS) {
+      j[n][0] = lerp(j[n][0], t[n][0], k);
+      j[n][1] = lerp(j[n][1], t[n][1], k);
+    }
+  },
+
+  // o: {t, joints, mods, paint, glow, lights:{head,left,right,brake}, wheelRot, throttle, noRider, alarmBlink}
+  draw(ctx, o) {
+    const m = o.mods || {};
+    const L = o.lights || {};
+    const t = o.t || 0;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // --- подсветка днища
+    if (m.underglow && L.glow) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(-10, 4, 2, -10, 4, 70);
+      const pulse = 0.75 + 0.25 * Math.sin(t * 3);
+      g.addColorStop(0, hexA(o.glow, 0.9 * pulse));
+      g.addColorStop(0.5, hexA(o.glow, 0.35 * pulse));
+      g.addColorStop(1, hexA(o.glow, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(-10, 4, 70, 18, 0, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // --- мотор и колесо (сзади)
+    if (m.motor) {
+      // кронштейны
+      ctx.strokeStyle = '#455a64'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(-36, 22); ctx.lineTo(-50, 10); ctx.moveTo(-38, 30); ctx.lineTo(-56, 26); ctx.stroke();
+      // колесо
+      ctx.save();
+      ctx.translate(-50, 10);
+      ctx.fillStyle = '#212121';
+      ctx.beginPath(); ctx.arc(0, 0, 12, 0, TAU); ctx.fill();
+      ctx.rotate(-(o.wheelRot || 0));
+      ctx.strokeStyle = '#9e9e9e'; ctx.lineWidth = 1.5;
+      for (let i = 0; i < 8; i++) {
+        const a = i * TAU / 8;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a) * 11, Math.sin(a) * 11); ctx.lineTo(Math.cos(a) * 14, Math.sin(a) * 14); ctx.stroke();
+      }
+      ctx.fillStyle = '#757575';
+      ctx.beginPath(); ctx.arc(0, 0, 5, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#424242'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(4, 0); ctx.stroke();
+      ctx.restore();
+      // цепь
+      ctx.strokeStyle = '#616161'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-52, 34); ctx.lineTo(-56, 12); ctx.moveTo(-46, 34); ctx.lineTo(-44, 12); ctx.stroke();
+      // корпус пилы
+      const shake = o.throttle ? Math.sin(t * 90) * 0.6 : (o.engineOn ? Math.sin(t * 60) * 0.3 : 0);
+      ctx.save(); ctx.translate(0, shake);
+      ctx.fillStyle = '#ff6d00';
+      roundRect(ctx, -66, 24, 30, 20, 4); ctx.fill();
+      ctx.fillStyle = '#263238';
+      for (let i = 0; i < 4; i++) { ctx.fillRect(-60 + i * 5, 44, 3, 6); }
+      ctx.fillStyle = '#37474f'; ctx.fillRect(-64, 26, 8, 8);
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(-68, 38); ctx.lineTo(-72, 40); ctx.stroke(); // стартер
+      ctx.strokeStyle = '#9e9e9e'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(-66, 28); ctx.lineTo(-76, 26); ctx.stroke(); // глушитель
+      ctx.restore();
+    }
+
+    // --- задний полоз и передняя лыжа
+    ctx.strokeStyle = '#263238';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(-46, 6); ctx.quadraticCurveTo(-44, 2, -38, 2); ctx.lineTo(-2, 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4, 2); ctx.lineTo(38, 2); ctx.quadraticCurveTo(48, 2, 50, 11); ctx.stroke();
+
+    // --- задняя нога наездника (за рамой)
+    const J = o.joints;
+    if (J && !o.noRider) this.drawLimb(ctx, J.hip, J.kn2, J.ft2, '#1a237e', 7);
+
+    // --- рама
+    ctx.strokeStyle = o.paint || '#e53935';
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.moveTo(-34, 3); ctx.lineTo(-30, 22);
+    ctx.moveTo(-8, 3); ctx.lineTo(-10, 22);
+    ctx.moveTo(-38, 22); ctx.lineTo(0, 22); ctx.lineTo(18, 30);
+    ctx.moveTo(22, 3); ctx.lineTo(14, 52);
+    ctx.stroke();
+    ctx.strokeStyle = '#37474f'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(16, 3); ctx.lineTo(28, 3); ctx.stroke();
+    // руль
+    ctx.strokeStyle = '#263238'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(8, 52); ctx.lineTo(20, 55); ctx.stroke();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(15, 54); ctx.lineTo(20, 55); ctx.stroke();
+    // сиденье
+    ctx.fillStyle = '#3e2723';
+    roundRect(ctx, -38, 22, 34, 7, 3); ctx.fill();
+
+    // --- электроника
+    if (m.speaker) {
+      ctx.fillStyle = '#37474f'; roundRect(ctx, -30, 8, 15, 12, 2); ctx.fill();
+      ctx.fillStyle = '#90a4ae'; ctx.beginPath(); ctx.arc(-22.5, 14, 4 + (o.music ? Math.abs(Math.sin(t * 16)) : 0), 0, TAU); ctx.fill();
+    }
+    if (m.horn) { ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(9, 28, 3.5, 0, TAU); ctx.fill(); }
+    if (m.alarm) {
+      const on = o.alarmBlink && Math.sin(t * 4) > 0.6;
+      this.lamp(ctx, -13, 25, 2, on ? '#ff1744' : '#5d0000', on);
+    }
+    if (m.speedo) {
+      ctx.fillStyle = '#111'; roundRect(ctx, 7, 56, 10, 6, 1.5); ctx.fill();
+      ctx.fillStyle = '#00e676'; ctx.fillRect(8.5, 58, 7, 2);
+    }
+    if (m.stoplight) {
+      ctx.fillStyle = '#333'; ctx.fillRect(-44, 17, 5, 7);
+      this.lamp(ctx, -41.5, 20.5, 2.5, L.brake ? '#ff1744' : (L.head ? '#b71c1c' : '#5d0000'), L.brake);
+    }
+    if (m.turn) {
+      const blink = Math.sin(t * 14) > 0;
+      this.lamp(ctx, 21, 34, 2.4, L.left && blink ? '#ffab00' : '#6d4c00', L.left && blink);
+      this.lamp(ctx, -40, 27, 2.4, L.right && blink ? '#ffab00' : '#6d4c00', L.right && blink);
+    }
+    if (m.headlight) {
+      ctx.fillStyle = '#424242'; roundRect(ctx, 15, 40, 9, 8, 2); ctx.fill();
+      this.lamp(ctx, 24.5, 44, 3, L.head ? '#fffde7' : '#9e9e9e', L.head, 16);
+    }
+
+    // --- наездник
+    if (J && !o.noRider) this.drawRider(ctx, J, false);
+    ctx.restore();
+  },
+
+  lamp(ctx, x, y, r, color, glow, glowR = 9) {
+    if (glow) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(x, y, 0, x, y, glowR);
+      g.addColorStop(0, hexA(color, 0.9)); g.addColorStop(1, hexA(color, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, glowR, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  },
+
+  drawLimb(ctx, a, b, c, color, w) {
+    ctx.strokeStyle = color; ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.stroke();
+    // ботинок
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(c[0], c[1], w * 0.55, 0, TAU); ctx.fill();
+  },
+
+  drawRider(ctx, J, withBackLeg) {
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (withBackLeg) this.drawLimb(ctx, J.hip, J.kn2, J.ft2, '#1a237e', 7);
+    // задняя рука
+    ctx.strokeStyle = '#0d47a1'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(J.sh[0], J.sh[1]); ctx.lineTo(J.el2[0], J.el2[1]); ctx.lineTo(J.hand2[0], J.hand2[1]); ctx.stroke();
+    // туловище (куртка)
+    ctx.strokeStyle = '#1976d2'; ctx.lineWidth = 13;
+    ctx.beginPath(); ctx.moveTo(J.hip[0], J.hip[1]); ctx.lineTo(J.sh[0], J.sh[1]); ctx.stroke();
+    // передняя нога
+    this.drawLimb(ctx, J.hip, J.kn, J.ft, '#283593', 7.5);
+    // шарф
+    ctx.strokeStyle = '#fdd835'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(J.sh[0] - 2, J.sh[1] + 2); ctx.lineTo(J.sh[0] + 3, J.sh[1] + 3); ctx.stroke();
+    // голова
+    const hx = J.head[0], hy = J.head[1];
+    ctx.fillStyle = '#ffcc99';
+    ctx.beginPath(); ctx.arc(hx, hy, 7.5, 0, TAU); ctx.fill();
+    // шапка с помпоном
+    const ang = Math.atan2(hy - J.sh[1], hx - J.sh[0]) - Math.PI / 2;
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(ang);
+    ctx.fillStyle = '#e53935';
+    ctx.beginPath(); ctx.arc(0, 1, 8, 0, Math.PI); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-8.5, 0, 17, 3);
+    ctx.beginPath(); ctx.arc(-2, 10, 3.5, 0, TAU); ctx.fill();
+    // глаз
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(4, -2, 1.2, 0, TAU); ctx.fill();
+    ctx.restore();
+    // передняя рука (варежка)
+    ctx.strokeStyle = '#1565c0'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(J.sh[0], J.sh[1]); ctx.lineTo(J.el[0], J.el[1]); ctx.lineTo(J.hand[0], J.hand[1]); ctx.stroke();
+    ctx.fillStyle = '#e53935'; ctx.beginPath(); ctx.arc(J.hand[0], J.hand[1], 3.5, 0, TAU); ctx.fill();
+  },
+};
+
+</script>
+<script>
+'use strict';
+// ===== Мини-игра «Пайка»: соединяем выводы проводами, паяем точки, включаем =====
+
+// типы компонентов: размеры и выводы (смещения от центра)
+const CT = {
+  battery: { name: 'Аккумулятор', w: 130, h: 46, pins: { '+': [80, 0], '-': [-80, 0] }, pol: true },
+  switch: { name: 'Тумблер', w: 64, h: 44, pins: { '1': [-20, 36], '2': [20, 36] }, closes: ['1', '2'] },
+  tact: { name: 'Кнопка', w: 44, h: 44, pins: { '1': [-34, 0], '2': [34, 0] }, closes: ['1', '2'] },
+  led: { name: 'Светодиод', w: 34, h: 40, pins: { 'A': [-11, 42], 'K': [11, 38] }, pol: true },
+  res: { name: 'Резистор', w: 60, h: 18, pins: { '1': [-46, 0], '2': [46, 0] } },
+  strip: { name: 'LED-лента', w: 220, h: 30, pins: { '+': [-124, -12], '-': [-124, 12] }, pol: true },
+  buzzer: { name: 'Пищалка', w: 50, h: 50, pins: { '+': [-13, 40], '-': [13, 40] }, pol: true },
+  tilt: { name: 'Датчик наклона', w: 54, h: 24, pins: { '1': [-40, 0], '2': [40, 0] }, closes: ['1', '2'] },
+  micro: { name: 'Концевик', w: 52, h: 32, pins: { '1': [-17, 30], '2': [17, 30] }, closes: ['1', '2'] },
+  mcu: { name: 'Ардуинка', w: 220, h: 70, pins: { VIN: [-90, 48], GND: [-54, 48], '5V': [-18, 48], D2: [18, 48], A4: [54, 48], A5: [90, 48] } },
+  oled: { name: 'Дисплей', w: 130, h: 70, pins: { VCC: [-45, 48], GND: [-15, 48], SCL: [15, 48], SDA: [45, 48] } },
+  hall: { name: 'Датчик Холла', w: 70, h: 28, pins: { VCC: [-22, 32], GND: [0, 32], OUT: [22, 32] } },
+  bt: { name: 'BT-модуль', w: 100, h: 50, pins: { VCC: [-30, 38], GND: [0, 38], OUT: [30, 38] } },
+  amp: { name: 'Усилитель', w: 120, h: 56, pins: { VCC: [-42, -41], GND: [-14, -41], IN: [14, -41], 'O+': [-20, 41], 'O-': [20, 41] } },
+  spk: { name: 'Динамик', w: 74, h: 74, pins: { '+': [-15, 50], '-': [15, 50] }, pol: true },
+};
+const PIN_LABEL = {
+  battery: { '+': '+', '-': '−' }, led: { A: 'A+', K: 'K−' }, buzzer: { '+': '+', '-': '−' }, strip: { '+': '+', '-': '−' },
+  spk: { '+': '+', '-': '−' }, amp: { 'O-': 'O−' },
+};
+// какая деталь магазина соответствует компоненту (для «сгорело — нужна новая»)
+const COMP_ITEM = { battery: 'battery', led: null, buzzer: 'buzzer' };
+
+class SolderGame {
+  constructor(p) {
+    this.p = p;
+    this.comps = p.comps.map(c => ({ ...c, T: CT[c.t], burnt: false }));
+    this.wires = [];
+    this.joints = {};
+    this.tool = 'wire';
+    this.pending = null;
+    this.mouse = { x: -100, y: -100 };
+    this.heating = null;
+    this.fx = [];
+    this.t = 0;
+    this.lit = false;
+    this.flags = {};
+    this.done = false;
+    this.log = [];
+    this.station = !!S.tools.station;
+    this.colorIdx = 0;
+    this.colors = ['#e53935', '#212121', '#fdd835', '#43a047', '#1e88e5', '#fb8c00', '#8e24aa', '#00acc1'];
+  }
+
+  start(api) {
+    this.api = api;
+    this.say('Выбери «Провод» и соедини выводы. Потом пропаяй каждую точку паяльником и жми «Включить».');
+    this.refresh();
+  }
+
+  say(msg, cls = '') {
+    this.log.unshift({ msg, cls });
+    this.log = this.log.slice(0, 4);
+    this.refresh();
+  }
+
+  refresh() {
+    const p = this.p;
+    const html = `
+      <div class="mg-sec"><b>${p.icon} ${p.name}</b><div class="small">${p.desc}</div></div>
+      <div class="mg-sec"><b>Схема:</b><ol class="hint">${p.hint.map(h => `<li>${h}</li>`).join('')}</ol></div>
+      <div class="mg-sec res-row"><span>〽️ Провода: <b>${S.inv.wire || 0}</b></span><span>🧵 Припой: <b>${S.inv.solder || 0}</b></span></div>
+      <div class="mg-sec small">${this.tool === 'iron'
+        ? '🔥 Зажми точку и отпусти, когда стрелка в <span style="color:#69f0ae">зелёной зоне</span>. Рано — холодная пайка, поздно — перегрев.'
+        : this.tool === 'cut' ? '✂️ Нажми на провод, чтобы его убрать.' : '〽️ Нажми на вывод, потом на другой вывод.'}</div>
+      <div class="mg-log">${this.log.map(l => `<div class="${l.cls}">${l.msg}</div>`).join('')}</div>`;
+    this.api.info(html);
+    const btns = [
+      { label: '〽️ Провод', active: this.tool === 'wire', onClick: () => { this.tool = 'wire'; this.pending = null; this.refresh(); } },
+      { label: '🔥 Паяльник', active: this.tool === 'iron', onClick: () => { this.tool = 'iron'; this.pending = null; this.refresh(); } },
+      { label: '✂️ Убрать', active: this.tool === 'cut', onClick: () => { this.tool = 'cut'; this.pending = null; this.refresh(); } },
+    ];
+    if (S.tools.multimeter) btns.push({ label: '📟 Прозвонить', onClick: () => this.test(true) });
+    btns.push({ label: '⚡ Включить', cls: 'primary', onClick: () => this.test(false) });
+    if (this.done) {
+      this.api.buttons([{ label: '✅ Поставить на снегокат', cls: 'primary', onClick: () => this.install() }]);
+    } else this.api.buttons(btns);
+  }
+
+  pinPos(key) {
+    const [cid, pin] = key.split('.');
+    const c = this.comps.find(c => c.id === cid);
+    const o = c.T.pins[pin];
+    return [c.x + o[0], c.y + o[1]];
+  }
+  allPins() {
+    const out = [];
+    for (const c of this.comps) for (const pin in c.T.pins) {
+      const o = c.T.pins[pin];
+      out.push({ key: c.id + '.' + pin, x: c.x + o[0], y: c.y + o[1], c, pin });
+    }
+    return out;
+  }
+  pinAt(x, y, r = 17) {
+    let best = null, bd = r;
+    for (const p of this.allPins()) {
+      const d = dist(x, y, p.x, p.y);
+      if (d < bd) { bd = d; best = p; }
+    }
+    return best;
+  }
+  pinName(key) {
+    const [cid, pin] = key.split('.');
+    const c = this.comps.find(c => c.id === cid);
+    const lab = (PIN_LABEL[c.t] && PIN_LABEL[c.t][pin]) || pin;
+    return `${c.label || c.T.name} [${lab}]`;
+  }
+  wirePath(w) {
+    const [ax, ay] = this.pinPos(w.a), [bx, by] = this.pinPos(w.b);
+    const mx = (ax + bx) / 2, my = (ay + by) / 2 + Math.min(60, dist(ax, ay, bx, by) * 0.18);
+    return [ax, ay, mx, my, bx, by];
+  }
+  wireAt(x, y) {
+    for (const w of this.wires) {
+      const [ax, ay, mx, my, bx, by] = this.wirePath(w);
+      for (let i = 0; i <= 20; i++) {
+        const t = i / 20, u = 1 - t;
+        const px = u * u * ax + 2 * u * t * mx + t * t * bx, py = u * u * ay + 2 * u * t * my + t * t * by;
+        if (dist(x, y, px, py) < 9) return w;
+      }
+    }
+    return null;
+  }
+  wiresAt(key) { return this.wires.filter(w => w.a === key || w.b === key); }
+
+  // ---------- ввод
+  down(x, y) {
+    if (this.done) return;
+    this.mouse.x = x; this.mouse.y = y;
+    const pin = this.pinAt(x, y);
+    if (this.tool === 'wire') {
+      if (!pin) { this.pending = null; return; }
+      if (this.pending && this.pending !== pin.key) { this.connect(this.pending, pin.key); this.pending = null; }
+      else { this.pending = pin.key; this.dragStart = pin.key; Sfx.click(); }
+    } else if (this.tool === 'iron') {
+      if (!pin) return;
+      if (!this.joints[pin.key]) { this.say('Сначала подведи к этому выводу провод.', 'warn'); return; }
+      if ((S.inv.solder || 0) <= 0) { this.say('Кончился припой! Купи в магазине.', 'bad'); Sfx.error(); return; }
+      S.inv.solder--; Save.dirty();
+      const j = this.joints[pin.key];
+      const w = this.station ? 0.26 : 0.17;
+      const c = rand(0.5, 0.78);
+      j.zone = [c - w / 2, c + w / 2];
+      j.heat = 0;
+      j.state = 'none';
+      this.heating = pin.key;
+      Sfx.setSizzle(true);
+      this.refresh();
+    } else if (this.tool === 'cut') {
+      const w = this.wireAt(x, y);
+      if (w) {
+        this.wires.splice(this.wires.indexOf(w), 1);
+        S.inv.wire = (S.inv.wire || 0) + 1;
+        for (const k of [w.a, w.b]) if (!this.wiresAt(k).length) delete this.joints[k];
+          else if (this.joints[k]) this.joints[k].state = 'none';
+        Sfx.click();
+        this.lit = false;
+        this.refresh();
+      }
+    }
+  }
+  move(x, y) { this.mouse.x = x; this.mouse.y = y; }
+  up(x, y) {
+    if (this.tool === 'wire' && this.dragStart) {
+      const pin = this.pinAt(x, y);
+      if (pin && pin.key !== this.dragStart) { this.connect(this.dragStart, pin.key); this.pending = null; }
+      this.dragStart = null;
+    }
+    if (this.heating) this.finishJoint();
+  }
+
+  connect(a, b) {
+    if (a.split('.')[0] === b.split('.')[0]) { this.say('Выводы одной детали соединять нельзя — это закоротит её.', 'warn'); return; }
+    if (this.wires.some(w => (w.a === a && w.b === b) || (w.a === b && w.b === a))) { this.say('Такой провод уже есть.', 'warn'); return; }
+    if ((S.inv.wire || 0) <= 0) { this.say('Кончились провода! Купи в магазине.', 'bad'); Sfx.error(); return; }
+    S.inv.wire--; Save.dirty();
+    this.wires.push({ a, b, color: this.colors[this.colorIdx++ % this.colors.length] });
+    for (const k of [a, b]) {
+      if (!this.joints[k]) this.joints[k] = { state: 'none', heat: 0 };
+      else this.joints[k].state = 'none'; // новый провод — надо перепаять точку
+    }
+    this.lit = false;
+    Sfx.click();
+    this.refresh();
+  }
+
+  finishJoint() {
+    const key = this.heating;
+    this.heating = null;
+    Sfx.setSizzle(false);
+    const j = this.joints[key];
+    if (!j) return;
+    const [px, py] = this.pinPos(key);
+    if (j.heat < j.zone[0]) { j.state = 'cold'; this.say('Холодная пайка — серый комок. Перепаяй!', 'warn'); }
+    else if (j.heat <= j.zone[1]) {
+      j.state = 'good';
+      Sfx.tone(1200, 0.06, 'sine', 0.08);
+      for (let i = 0; i < 6; i++) this.fx.push({ x: px, y: py, vx: rand(-20, 20), vy: rand(-60, -20), life: 0.8, type: 'smoke' });
+    } else { j.state = 'burnt'; this.say('Перегрел — изоляция поплавилась. Перепаяй!', 'warn'); }
+    this.refresh();
+  }
+
+  update(dt) {
+    this.t += dt;
+    if (this.heating) {
+      const j = this.joints[this.heating];
+      j.heat += dt * (this.station ? 0.55 : 0.62);
+      const [px, py] = this.pinPos(this.heating);
+      if (Math.random() < 0.5) this.fx.push({ x: px + rand(-4, 4), y: py, vx: rand(-15, 15), vy: rand(-50, -25), life: 1, type: 'smoke' });
+      if (j.heat >= 1.05) this.finishJoint();
+    }
+    for (const f of this.fx) { f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt; if (f.type === 'spark') f.vy += 300 * dt; }
+    this.fx = this.fx.filter(f => f.life > 0);
+  }
+
+  // ---------- проверка схемы
+  analyze() {
+    const parent = {};
+    const find = k => { while (parent[k] && parent[k] !== k) k = parent[k]; return k; };
+    const uni = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb; };
+    const pins = this.allPins().map(p => p.key);
+    const good = k => this.joints[k] && this.joints[k].state === 'good';
+    const reset = () => pins.forEach(k => parent[k] = k);
+    reset();
+    for (const w of this.wires) if (good(w.a) && good(w.b)) uni(w.a, w.b);
+    const wiring = {}; pins.forEach(k => wiring[k] = find(k));
+    // с замкнутыми выключателями — для поиска КЗ
+    for (const c of this.comps) if (c.T.closes) uni(c.id + '.' + c.T.closes[0], c.id + '.' + c.T.closes[1]);
+    const power = {}; pins.forEach(k => power[k] = find(k));
+    // «полная» проводка без учёта качества пайки (для подсказок)
+    reset();
+    for (const w of this.wires) uni(w.a, w.b);
+    const raw = {}; pins.forEach(k => raw[k] = find(k));
+    return { wiring, power, raw };
+  }
+
+  matches(part, swap) {
+    const m = k => (swap && swap[k]) || k;
+    const nets = this.p.nets;
+    for (const n of nets) for (let i = 1; i < n.length; i++) if (part[m(n[0])] !== part[m(n[i])]) return false;
+    for (let a = 0; a < nets.length; a++) for (let b = a + 1; b < nets.length; b++)
+      if (part[m(nets[a][0])] === part[m(nets[b][0])]) return false;
+    return true;
+  }
+
+  test(dry) {
+    if (this.done) return;
+    const { wiring, power, raw } = this.analyze();
+    const p = this.p;
+    const marks = [];
+    // 1. КЗ
+    const bat = 'bat';
+    if (power[bat + '.+'] === power[bat + '.-']) {
+      if (dry) { this.say('📟 Пищит прозвонка между + и − ! Это КОРОТКОЕ ЗАМЫКАНИЕ. Не включай!', 'bad'); Sfx.tone(2000, 0.5, 'square', 0.08); return; }
+      this.boom('bat');
+      this.say('💥 КОРОТКОЕ ЗАМЫКАНИЕ! Аккумулятор вздулся и сгорел.', 'bad');
+      App.ach('short');
+      this.consumeBurnt('battery');
+      return;
+    }
+    // 2. всё верно?
+    if (this.matches(wiring)) {
+      if (dry) { this.say('📟 Прозвонка: всё звонится как надо! Можно включать.', 'good'); Sfx.tone(1500, 0.15, 'sine', 0.1); return; }
+      this.win();
+      return;
+    }
+    // 3. полярность
+    for (const c of this.comps) {
+      if (!c.T.pol) continue;
+      const ks = Object.keys(c.T.pins);
+      const swap = { [c.id + '.' + ks[0]]: c.id + '.' + ks[1], [c.id + '.' + ks[1]]: c.id + '.' + ks[0] };
+      if (this.matches(wiring, swap)) {
+        this.say(`${dry ? '📟 ' : ''}${c.label || c.T.name}: перепутана полярность! ${c.t === 'led' ? 'Длинная нога (A) — к плюсу.' : c.t === 'battery' ? 'Перепутал + и − аккумулятора.' : 'Плюс к плюсу.'}`, 'warn');
+        if (!dry) Sfx.error();
+        return;
+      }
+    }
+    // 4. лишние соединения (в т.ч. резистор в обход)
+    const nets = p.nets;
+    for (let a = 0; a < nets.length; a++) for (let b = a + 1; b < nets.length; b++) {
+      if (wiring[nets[a][0]] !== wiring[nets[b][0]]) continue;
+      const ra = this.comps.find(c => c.t === 'res' && (nets[a].includes(c.id + '.1') && nets[b].includes(c.id + '.2') || nets[a].includes(c.id + '.2') && nets[b].includes(c.id + '.1')));
+      if (ra && !dry) {
+        const led = this.comps.find(c => c.t === 'led' && (nets[a].concat(nets[b]).includes(c.id + '.A')));
+        if (led) {
+          this.boom(led.id);
+          this.say(`💥 ${led.label || 'Светодиод'} вспыхнул и сгорел — ток пошёл в обход резистора!`, 'bad');
+          const item = { '#ffffff': 'led_w', '#ff1744': 'led_r', '#ff9100': 'led_o' }[led.color] || 'led_r';
+          this.consumeBurnt(item);
+          return;
+        }
+      }
+      this.say(`${dry ? '📟 ' : ''}Лишнее соединение: ${this.pinName(nets[a][0])} и ${this.pinName(nets[b][0])} не должны быть соединены.`, 'warn');
+      marks.push(nets[a][0], nets[b][0]);
+      this.marks = { keys: marks, t: 3 };
+      if (!dry) Sfx.error();
+      return;
+    }
+    // 5. не хватает соединений
+    for (const n of nets) for (let i = 1; i < n.length; i++) {
+      if (wiring[n[0]] === wiring[n[i]]) continue;
+      if (raw[n[0]] === raw[n[i]]) {
+        const bad = this.wires.flatMap(w => [w.a, w.b]).filter(k => this.joints[k] && this.joints[k].state !== 'good');
+        this.say(`${dry ? '📟 ' : ''}Нет контакта: провод есть, но не пропаян или плохая пайка.`, 'warn');
+        this.marks = { keys: bad, t: 3 };
+      } else {
+        this.say(`${dry ? '📟 ' : ''}Цепь не замкнута: нужно соединить ${this.pinName(n[0])} и ${this.pinName(n[i])}.`, 'warn');
+        this.marks = { keys: [n[0], n[i]], t: 3 };
+      }
+      if (!dry) Sfx.error();
+      return;
+    }
+  }
+
+  boom(cid) {
+    const c = this.comps.find(c => c.id === cid);
+    c.burnt = true;
+    Sfx.bang();
+    for (let i = 0; i < 40; i++) this.fx.push({ x: c.x, y: c.y, vx: rand(-160, 160), vy: rand(-200, 40), life: rand(0.4, 1.2), type: 'spark' });
+    for (let i = 0; i < 25; i++) this.fx.push({ x: c.x + rand(-20, 20), y: c.y, vx: rand(-20, 20), vy: rand(-60, -20), life: rand(1, 2.5), type: 'bigsmoke' });
+  }
+  consumeBurnt(item) {
+    S.inv[item] = Math.max(0, (S.inv[item] || 0) - 1);
+    Save.dirty();
+    const need = this.p.parts[item] || 1;
+    if ((S.inv[item] || 0) >= need) {
+      setTimeout(() => {
+        this.comps.forEach(c => { c.burnt = false; });
+        this.say(`Поставил запасной ${ITEMS[item].name.toLowerCase()}. Исправь ошибку!`, '');
+      }, 1500);
+    } else {
+      setTimeout(() => {
+        UI.modal('Сгорело 🔥', `Нет запасного: <b>${ITEMS[item].name}</b>.<br>Купи новый в магазине и попробуй снова.`);
+        MG.close(false);
+      }, 1600);
+    }
+  }
+
+  win() {
+    this.lit = true;
+    Sfx.success();
+    if (this.p.id === 'horn' || this.p.id === 'alarm') Sfx.hornTone();
+    if (this.p.firmware) {
+      this.say('Схема ожила! Прошиваем ардуинку… ⏳', 'good');
+      this.flash = 0;
+      const tick = () => {
+        this.flash += 0.1;
+        this.say(`Загрузка скетча: ${Math.min(100, Math.round(this.flash * 100))}%`, 'good');
+        if (this.flash < 1) setTimeout(tick, 220);
+        else { this.say('Прошивка готова! Дисплей показывает 0 км/ч.', 'good'); this.done = true; this.refresh(); }
+      };
+      setTimeout(tick, 300);
+    } else {
+      this.say('Работает! 🎉', 'good');
+      this.done = true;
+      this.refresh();
+    }
+  }
+
+  install() {
+    for (const k in this.p.parts) S.inv[k] = Math.max(0, (S.inv[k] || 0) - this.p.parts[k]);
+    S.mods[this.p.id] = true;
+    S.modOn[this.p.id] = true;
+    S.stats.solders++;
+    App.ach('first_solder');
+    if (PROJECTS.every(p => S.mods[p.id])) App.ach('all_electro');
+    Save.save();
+    UI.toast(`${this.p.icon} ${this.p.name} установлено на снегокат!`, 'good');
+    MG.close(false);
+  }
+
+  // ---------- отрисовка
+  draw(ctx) {
+    const W = 800, H = 450;
+    // стол
+    ctx.fillStyle = '#5d4037'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    for (let i = 0; i < 18; i++) ctx.fillRect(0, i * 26 + (i % 3) * 3, W, 2);
+    // термоковрик
+    ctx.fillStyle = '#26695c'; roundRect(ctx, 20, 20, W - 40, H - 40, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+    for (let x = 40; x < W - 20; x += 20) { ctx.beginPath(); ctx.moveTo(x, 20); ctx.lineTo(x, H - 20); ctx.stroke(); }
+    for (let y = 40; y < H - 20; y += 20) { ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(W - 20, y); ctx.stroke(); }
+
+    for (const c of this.comps) this.drawComp(ctx, c);
+
+    // провода
+    for (const w of this.wires) {
+      const [ax, ay, mx, my, bx, by] = this.wirePath(w);
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(ax, ay + 3); ctx.quadraticCurveTo(mx, my + 3, bx, by + 3); ctx.stroke();
+      ctx.strokeStyle = w.color; ctx.lineWidth = 4.5;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(mx, my, bx, by); ctx.stroke();
+    }
+    // тянущийся провод
+    const from = this.pending || this.dragStart;
+    if (this.tool === 'wire' && from) {
+      const [ax, ay] = this.pinPos(from);
+      ctx.setLineDash([8, 6]); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(this.mouse.x, this.mouse.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // выводы и точки пайки
+    const hover = this.pinAt(this.mouse.x, this.mouse.y);
+    for (const p of this.allPins()) {
+      const j = this.joints[p.key];
+      ctx.fillStyle = '#b87333';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#3e2723'; ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, TAU); ctx.fill();
+      if (j) {
+        if (j.state === 'good') {
+          const g = ctx.createRadialGradient(p.x - 2, p.y - 2, 1, p.x, p.y, 8);
+          g.addColorStop(0, '#ffffff'); g.addColorStop(0.4, '#cfd8dc'); g.addColorStop(1, '#78909c');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, TAU); ctx.fill();
+        } else if (j.state === 'cold') {
+          ctx.fillStyle = '#757575'; ctx.beginPath(); ctx.arc(p.x + 1, p.y, 7, 0, TAU); ctx.arc(p.x - 3, p.y - 2, 5, 0, TAU); ctx.fill();
+        } else if (j.state === 'burnt') {
+          ctx.fillStyle = '#212121'; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, TAU); ctx.fill();
+        } else {
+          ctx.strokeStyle = '#ffcc80'; ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+        }
+      }
+      const lab = (PIN_LABEL[p.c.t] && PIN_LABEL[p.c.t][p.pin]) || p.pin;
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      const ly = p.y + (p.y >= p.c.y ? 20 : -13);
+      ctx.fillText(lab, p.x, ly);
+    }
+    if (this.marks && this.marks.t > 0) {
+      this.marks.t -= 1 / 60;
+      for (const k of this.marks.keys) {
+        const [x, y] = this.pinPos(k);
+        ctx.strokeStyle = `rgba(255,23,68,${0.5 + 0.5 * Math.sin(this.t * 12)})`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(x, y, 15, 0, TAU); ctx.stroke();
+      }
+    }
+    if (hover && !this.heating) {
+      ctx.strokeStyle = '#fff59d'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(hover.x, hover.y, 13, 0, TAU); ctx.stroke();
+      const txt = this.pinName(hover.key);
+      ctx.font = '13px sans-serif';
+      const tw = ctx.measureText(txt).width + 14;
+      const tx = clamp(hover.x - tw / 2, 4, W - tw - 4), ty = hover.y - 42 < 4 ? hover.y + 24 : hover.y - 42;
+      ctx.fillStyle = 'rgba(0,0,0,0.8)'; roundRect(ctx, tx, ty, tw, 22, 6); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText(txt, tx + 7, ty + 15);
+    }
+
+    // эффекты
+    for (const f of this.fx) {
+      if (f.type === 'spark') { ctx.fillStyle = `rgba(255,${150 + Math.random() * 100 | 0},0,${f.life})`; ctx.fillRect(f.x, f.y, 3, 3); }
+      else {
+        const big = f.type === 'bigsmoke';
+        ctx.fillStyle = big ? `rgba(40,40,40,${f.life * 0.3})` : `rgba(230,230,230,${f.life * 0.35})`;
+        ctx.beginPath(); ctx.arc(f.x, f.y, (big ? 18 : 6) + (1 - f.life) * 10, 0, TAU); ctx.fill();
+      }
+    }
+
+    // паяльник и шкала нагрева
+    if (this.tool === 'iron') {
+      const { x, y } = this.mouse;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(-0.6);
+      ctx.fillStyle = this.heating ? '#ff7043' : '#b0bec5'; ctx.fillRect(-2, -38, 4, 38);
+      ctx.fillStyle = '#263238'; roundRect(ctx, -7, -110, 14, 74, 5); ctx.fill();
+      ctx.fillStyle = '#ffca28'; ctx.fillRect(-7, -60, 14, 4);
+      ctx.restore();
+    }
+    if (this.heating) {
+      const j = this.joints[this.heating];
+      const [px, py] = this.pinPos(this.heating);
+      const bx = clamp(px - 60, 10, W - 130), by = py - 60 < 10 ? py + 30 : py - 60;
+      ctx.fillStyle = 'rgba(0,0,0,0.75)'; roundRect(ctx, bx - 4, by - 4, 128, 22, 6); ctx.fill();
+      ctx.fillStyle = '#455a64'; ctx.fillRect(bx, by, 120, 14);
+      ctx.fillStyle = '#00c853'; ctx.fillRect(bx + j.zone[0] * 120, by, (j.zone[1] - j.zone[0]) * 120, 14);
+      ctx.fillStyle = '#d50000'; ctx.fillRect(bx + j.zone[1] * 120, by, (1 - j.zone[1]) * 120, 14);
+      ctx.fillStyle = '#fff'; ctx.fillRect(bx + clamp(j.heat, 0, 1) * 120 - 2, by - 3, 4, 20);
+    }
+    // проверка удачи — свечение
+    if (this.lit) {
+      for (const c of this.comps) {
+        let col = null;
+        if (c.t === 'led') col = c.color;
+        if (c.t === 'strip') col = `hsl(${(this.t * 120) % 360},100%,60%)`;
+        if (c.t === 'oled') col = '#29b6f6';
+        if (!col) continue;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const g = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, c.t === 'strip' ? 140 : 60);
+        g.addColorStop(0, col.startsWith('#') ? hexA(col, 0.9) : col); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, c.t === 'strip' ? 140 : 60, 0, TAU); ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+
+  drawComp(ctx, c) {
+    const { x, y } = c, T = c.T;
+    ctx.save();
+    ctx.translate(x, y);
+    // ножки к выводам
+    ctx.strokeStyle = '#b0bec5'; ctx.lineWidth = 2.5;
+    for (const pin in T.pins) {
+      const [px, py] = T.pins[pin];
+      ctx.beginPath(); ctx.moveTo(clamp(px, -T.w / 2 + 4, T.w / 2 - 4), clamp(py, -T.h / 2 + 4, T.h / 2 - 4)); ctx.lineTo(px, py); ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; roundRect(ctx, -T.w / 2 + 4, -T.h / 2 + 5, T.w, T.h, 8); ctx.fill();
+    const lit = this.lit;
+    switch (c.t) {
+      case 'battery': {
+        const g = ctx.createLinearGradient(0, -23, 0, 23);
+        g.addColorStop(0, '#42a5f5'); g.addColorStop(0.5, '#1565c0'); g.addColorStop(1, '#0d47a1');
+        ctx.fillStyle = g; roundRect(ctx, -65, -23, 130, 46, 10); ctx.fill();
+        ctx.fillStyle = '#cfd8dc'; ctx.fillRect(62, -8, 6, 16);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('18650  3.7V', 0, 5);
+        ctx.font = 'bold 18px sans-serif'; ctx.fillText('+', 50, 7); ctx.fillText('−', -50, 7);
+        break;
+      }
+      case 'switch':
+        ctx.fillStyle = '#263238'; roundRect(ctx, -32, -22, 64, 44, 6); ctx.fill();
+        ctx.fillStyle = '#b0bec5'; ctx.beginPath(); ctx.arc(0, -4, 9, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(lit ? 12 : -12, -26); ctx.stroke();
+        break;
+      case 'tact':
+        ctx.fillStyle = '#212121'; roundRect(ctx, -22, -22, 44, 44, 4); ctx.fill();
+        ctx.fillStyle = '#9e9e9e'; ctx.fillRect(-22, -22, 4, 4); ctx.fillRect(18, -22, 4, 4); ctx.fillRect(-22, 18, 4, 4); ctx.fillRect(18, 18, 4, 4);
+        ctx.fillStyle = '#424242'; ctx.beginPath(); ctx.arc(0, 0, 12, 0, TAU); ctx.fill();
+        break;
+      case 'led': {
+        ctx.strokeStyle = '#b0bec5'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(-11, 10); ctx.lineTo(-11, 42); ctx.moveTo(11, 10); ctx.lineTo(11, 38); ctx.stroke();
+        ctx.fillStyle = c.burnt ? '#212121' : hexA(c.color === '#ffffff' ? '#e0f7fa' : c.color, lit ? 1 : 0.55);
+        ctx.beginPath(); ctx.arc(0, -4, 15, Math.PI, 0); ctx.lineTo(15, 12); ctx.lineTo(-15, 12); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(-8, -10, 4, 12);
+        break;
+      }
+      case 'res':
+        ctx.fillStyle = '#d7b98e'; roundRect(ctx, -30, -9, 60, 18, 8); ctx.fill();
+        ['#795548', '#212121', '#795548', '#ffd600'].forEach((col, i) => { ctx.fillStyle = col; ctx.fillRect(-18 + i * 10, -9, 5, 18); });
+        break;
+      case 'strip':
+        ctx.fillStyle = '#eceff1'; roundRect(ctx, -110, -15, 220, 30, 4); ctx.fill();
+        for (let i = 0; i < 9; i++) {
+          ctx.fillStyle = lit ? `hsl(${(i * 40 + this.t * 200) % 360},100%,60%)` : '#ffe082';
+          ctx.fillRect(-96 + i * 23, -7, 12, 14);
+        }
+        break;
+      case 'buzzer':
+        ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0, 0, 25, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('+', -13, 20);
+        break;
+      case 'tilt':
+        ctx.fillStyle = '#90a4ae'; roundRect(ctx, -27, -12, 54, 24, 10); ctx.fill();
+        ctx.fillStyle = '#eceff1'; ctx.beginPath(); ctx.arc(-8 + Math.sin(this.t * 3) * 6, 0, 6, 0, TAU); ctx.fill();
+        break;
+      case 'micro':
+        ctx.fillStyle = '#212121'; roundRect(ctx, -26, -16, 52, 32, 4); ctx.fill();
+        ctx.strokeStyle = '#cfd8dc'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-20, -18); ctx.lineTo(22, -26); ctx.stroke();
+        break;
+      case 'mcu':
+        ctx.fillStyle = '#0d47a1'; roundRect(ctx, -110, -35, 220, 70, 6); ctx.fill();
+        ctx.fillStyle = '#212121'; ctx.fillRect(-30, -18, 50, 30);
+        ctx.fillStyle = '#cfd8dc'; ctx.fillRect(-108, -12, 22, 22);
+        ctx.fillStyle = lit ? '#76ff03' : '#33691e'; ctx.fillRect(70, -25, 8, 6);
+        ctx.fillStyle = '#fff'; ctx.font = '11px monospace'; ctx.textAlign = 'center'; ctx.fillText('NANO', 50, 10);
+        break;
+      case 'oled':
+        ctx.fillStyle = '#1a237e'; roundRect(ctx, -65, -35, 130, 70, 4); ctx.fill();
+        ctx.fillStyle = '#000'; ctx.fillRect(-55, -28, 110, 50);
+        if (lit) { ctx.fillStyle = '#29b6f6'; ctx.font = 'bold 20px monospace'; ctx.textAlign = 'center'; ctx.fillText(this.done ? '0 км/ч' : '...', 0, 4); }
+        break;
+      case 'hall':
+        ctx.fillStyle = '#004d40'; roundRect(ctx, -35, -14, 70, 28, 3); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.fillRect(-8, -8, 16, 12);
+        ctx.fillStyle = '#e53935'; ctx.fillRect(22, -10, 8, 8);
+        break;
+      case 'bt':
+        ctx.fillStyle = '#01579b'; roundRect(ctx, -50, -25, 100, 50, 4); ctx.fill();
+        ctx.fillStyle = '#cfd8dc'; ctx.fillRect(-40, -15, 40, 22);
+        ctx.fillStyle = lit ? '#2979ff' : '#1a237e'; ctx.beginPath(); ctx.arc(30, -10, 4, 0, TAU); ctx.fill();
+        break;
+      case 'amp':
+        ctx.fillStyle = '#b71c1c'; roundRect(ctx, -60, -28, 120, 56, 4); ctx.fill();
+        ctx.fillStyle = '#212121'; ctx.fillRect(-14, -10, 28, 20);
+        break;
+      case 'spk':
+        ctx.fillStyle = '#37474f'; ctx.beginPath(); ctx.arc(0, 0, 37, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#263238'; ctx.beginPath(); ctx.arc(0, 0, 26 + (lit ? Math.sin(this.t * 30) * 2 : 0), 0, TAU); ctx.fill();
+        ctx.fillStyle = '#90a4ae'; ctx.beginPath(); ctx.arc(0, 0, 9, 0, TAU); ctx.fill();
+        break;
+    }
+    if (c.burnt) {
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'; roundRect(ctx, -T.w / 2, -T.h / 2, T.w, T.h, 8); ctx.fill();
+    }
+    // подпись
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    const pinsBelow = Object.values(T.pins).some(p => p[1] > T.h / 2);
+    ctx.fillText(c.label || T.name, 0, pinsBelow ? -T.h / 2 - 8 : T.h / 2 + 18);
+    ctx.restore();
+  }
+
+  exit(byUser) {
+    if (byUser && !this.done && this.wires.length) UI.toast('Схему бросил. Провода и припой не вернуть 🙃');
+  }
+}
+
+const Solder = {
+  canStart(p) {
+    for (const k in p.parts) if ((S.inv[k] || 0) < p.parts[k]) return false;
+    return true;
+  },
+  start(p) {
+    if (!this.canStart(p)) { UI.toast('Не хватает деталей!', 'bad'); return; }
+    MG.open(`Пайка: ${p.name}`, new SolderGame(p));
+  },
+};
+
+</script>
+<script>
+'use strict';
+// ===== Сборка мотора из бензопилы: этапы-мини-игры =====
+
+function drawSaw(ctx, x, y, s = 1, open = false) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  // шина
+  ctx.fillStyle = '#9e9e9e'; roundRect(ctx, 110, -20, 200, 40, 20); ctx.fill();
+  ctx.strokeStyle = '#616161'; ctx.lineWidth = 4; roundRect(ctx, 110, -20, 200, 40, 20); ctx.stroke();
+  // корпус
+  ctx.fillStyle = open ? '#455a64' : '#ef6c00';
+  roundRect(ctx, -150, -90, 270, 170, 30); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.15)'; roundRect(ctx, -150, 30, 270, 50, 20); ctx.fill();
+  // ручка
+  ctx.strokeStyle = '#212121'; ctx.lineWidth = 18;
+  ctx.beginPath(); ctx.moveTo(-150, -40); ctx.quadraticCurveTo(-230, -40, -230, 20); ctx.lineTo(-150, 40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-60, -90); ctx.quadraticCurveTo(-20, -150, 60, -90); ctx.stroke();
+  ctx.restore();
+}
+
+// ---------- 1. Разборка: болты
+class BoltsGame {
+  start(api) {
+    this.api = api; this.t = 0; this.tool = 'key'; this.hold = null;
+    const pos = [[250, 140], [400, 120], [520, 150], [240, 300], [380, 320], [520, 300], [310, 220], [460, 220]];
+    const rusty = new Set(); while (rusty.size < 3) rusty.add(randi(0, 7));
+    this.bolts = pos.map((p, i) => ({ x: p[0], y: p[1], rusty: rusty.has(i), soak: 0, soaking: false, prog: 0, stripped: false, removed: false, rot: rand(0, 6) }));
+    this.drops = [];
+    this.msg = 'Зажми болт ключом, чтобы открутить. Рыжие — закисли!';
+    this.ui();
+  }
+  ui() {
+    const left = this.bolts.filter(b => !b.removed).length;
+    this.api.info(`<div class="mg-sec"><b>🔧 Разборка</b><div class="small">Осталось болтов: <b>${left}</b></div></div>
+      <div class="mg-sec small">Ржавый болт сначала <b>побрызгай смазкой</b> и подожди, пока впитается. Иначе сорвёшь грани — и придётся долго высверливать.</div>
+      <div class="mg-log"><div>${this.msg}</div></div>`);
+    this.api.buttons([
+      { label: '🔧 Ключ', active: this.tool === 'key', onClick: () => { this.tool = 'key'; this.ui(); } },
+      { label: '🧴 Смазка', active: this.tool === 'wd', onClick: () => { this.tool = 'wd'; this.ui(); } },
+    ]);
+  }
+  boltAt(x, y) { return this.bolts.find(b => !b.removed && dist(x, y, b.x, b.y) < 28); }
+  down(x, y) {
+    const b = this.boltAt(x, y); if (!b) return;
+    if (this.tool === 'wd') {
+      if (!b.rusty || b.soak >= 1) { this.msg = 'Этот болт и так нормальный.'; this.ui(); return; }
+      b.soaking = true; Sfx.noise(0.5, 0.2, 3000, 'highpass');
+      for (let i = 0; i < 10; i++) this.drops.push({ x: b.x + rand(-15, 15), y: b.y - 20, vy: rand(20, 60), life: 1 });
+      this.msg = 'Пшшш… Ждём, пока впитается.'; this.ui();
+    } else this.hold = b;
+  }
+  up() { this.hold = null; }
+  update(dt) {
+    this.t += dt;
+    for (const b of this.bolts) if (b.soaking && b.soak < 1) { b.soak = Math.min(1, b.soak + dt / 2.5); if (b.soak >= 1) { this.msg = 'Смазка впиталась — можно крутить.'; this.ui(); } }
+    const b = this.hold;
+    if (b && !b.removed) {
+      const speed = b.stripped ? 1 / 5 : 1 / 1.1;
+      b.prog += dt * speed;
+      b.rot += dt * (b.stripped ? 20 : 4);
+      if (Math.random() < dt * 8) b.stripped ? Sfx.noise(0.08, 0.15, 2500, 'bandpass') : Sfx.ratchet();
+      if (b.rusty && b.soak < 1 && !b.stripped && b.prog > 0.35) {
+        b.stripped = true; b.prog = 0; this.hold = null;
+        Sfx.error(); this.msg = '😱 Сорвал грани! Теперь только высверливать (зажми и жди).'; this.ui();
+      }
+      if (b.prog >= 1) {
+        b.removed = true; this.hold = null; Sfx.tone(600, 0.1, 'triangle', 0.15); Sfx.tone(400, 0.15, 'triangle', 0.1, 0, 0.12);
+        this.msg = b.stripped ? 'Высверлил. Фух.' : 'Болт откручен!';
+        this.ui();
+        if (this.bolts.every(b => b.removed)) Motor.complete('Крышка снята! Внутри… опилки и мышиное гнездо.');
+      }
+    }
+    for (const d of this.drops) { d.y += d.vy * dt; d.life -= dt; }
+    this.drops = this.drops.filter(d => d.life > 0);
+  }
+  draw(ctx) {
+    ctx.fillStyle = '#3e2723'; ctx.fillRect(0, 0, 800, 450);
+    drawSaw(ctx, 380, 230, 1);
+    for (const b of this.bolts) {
+      if (b.removed) { ctx.fillStyle = '#212121'; ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, TAU); ctx.fill(); continue; }
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+      ctx.fillStyle = b.rusty && b.soak < 1 ? (b.soak > 0 ? '#a1887f' : '#8d4a1f') : '#b0bec5';
+      ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; ctx.lineTo(Math.cos(a) * 18, Math.sin(a) * 18); } ctx.closePath(); ctx.fill();
+      ctx.fillStyle = b.stripped ? '#5d4037' : '#78909c'; ctx.beginPath(); ctx.arc(0, 0, 8, 0, TAU); ctx.fill();
+      if (b.stripped) { ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 13, 0, TAU); ctx.stroke(); }
+      ctx.restore();
+      if (b.prog > 0) {
+        ctx.strokeStyle = b.stripped ? '#ff7043' : '#69f0ae'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(b.x, b.y, 25, -Math.PI / 2, -Math.PI / 2 + TAU * b.prog); ctx.stroke();
+      }
+      if (b.soaking && b.soak < 1) {
+        ctx.strokeStyle = '#4fc3f7'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(b.x, b.y, 30, -Math.PI / 2, -Math.PI / 2 + TAU * b.soak); ctx.stroke();
+      }
+    }
+    ctx.fillStyle = '#4fc3f7'; for (const d of this.drops) ctx.fillRect(d.x, d.y, 3, 6);
+  }
+}
+
+// ---------- 2. Чистка карбюратора
+class CleanGame {
+  start(api) {
+    this.api = api; this.t = 0; this.held = false; this.mx = 0; this.my = 0;
+    this.gw = 40; this.gh = 22; this.grid = [];
+    for (let i = 0; i < this.gw * this.gh; i++) this.grid.push(rand(0.6, 1));
+    this.jet = { x: 400, y: 225, clicks: 0, timer: 0, done: false };
+    this.api.buttons([]);
+    this.ui();
+  }
+  clean() { let s = 0; for (const v of this.grid) s += v; return 1 - s / this.grid.length; }
+  ui() {
+    const c = Math.round(this.clean() * 100);
+    this.api.info(`<div class="mg-sec"><b>🧽 Чистка карбюратора</b></div>
+      <div class="mg-sec">Чистота: <b>${c}%</b> (нужно 95%)<div class="bar"><i style="width:${c}%"></i></div></div>
+      <div class="mg-sec small">Води пальцем/мышкой с зажатой кнопкой — оттираешь нагар очистителем.</div>
+      <div class="mg-sec small">${this.clean() > 0.6 ? (this.jet.done ? '✅ Жиклёр продут!' : '👉 Появился жиклёр в центре! <b>Быстро тыкни по нему 5 раз</b>, чтобы продуть.') : 'Где-то под грязью есть жиклёр…'}</div>`);
+  }
+  down(x, y) {
+    this.held = true; this.mx = x; this.my = y;
+    if (this.clean() > 0.6 && !this.jet.done && dist(x, y, this.jet.x, this.jet.y) < 30) {
+      this.jet.clicks++; this.jet.timer = 1.5; Sfx.noise(0.15, 0.3, 2000, 'bandpass');
+      if (this.jet.clicks >= 5) { this.jet.done = true; Sfx.success(); this.ui(); this.check(); }
+    }
+  }
+  move(x, y) { this.mx = x; this.my = y; }
+  up() { this.held = false; }
+  check() { if (this.clean() >= 0.95 && this.jet.done) Motor.complete('Карбюратор блестит как новый!'); }
+  update(dt) {
+    this.t += dt;
+    if (this.jet.timer > 0) { this.jet.timer -= dt; if (this.jet.timer <= 0 && !this.jet.done) this.jet.clicks = 0; }
+    if (this.held) {
+      const cw = 560 / this.gw, ch = 300 / this.gh;
+      let changed = false;
+      for (let gy = 0; gy < this.gh; gy++) for (let gx = 0; gx < this.gw; gx++) {
+        const cx = 120 + gx * cw + cw / 2, cy = 75 + gy * ch + ch / 2;
+        const d = dist(cx, cy, this.mx, this.my);
+        if (d < 34) { const i = gy * this.gw + gx; if (this.grid[i] > 0) { this.grid[i] = Math.max(0, this.grid[i] - dt * 2.2 * (1 - d / 40)); changed = true; } }
+      }
+      if (changed && Math.random() < dt * 10) Sfx.noise(0.05, 0.05, 5000, 'highpass');
+      if (changed && Math.floor(this.t * 6) !== Math.floor((this.t - dt) * 6)) { this.ui(); this.check(); }
+    }
+  }
+  draw(ctx) {
+    ctx.fillStyle = '#263238'; ctx.fillRect(0, 0, 800, 450);
+    // карбюратор
+    ctx.fillStyle = '#cfd8dc'; roundRect(ctx, 120, 75, 560, 300, 40); ctx.fill();
+    ctx.fillStyle = '#b0bec5'; ctx.beginPath(); ctx.arc(400, 225, 90, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#90a4ae'; ctx.beginPath(); ctx.arc(400, 225, 55, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#eceff1'; [[200, 130], [600, 130], [200, 320], [600, 320]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 14, 0, TAU); ctx.fill(); });
+    if (this.clean() > 0.6) {
+      ctx.fillStyle = this.jet.done ? '#212121' : '#4e342e';
+      ctx.beginPath(); ctx.arc(this.jet.x, this.jet.y, 12, 0, TAU); ctx.fill();
+      if (!this.jet.done) { ctx.strokeStyle = `rgba(255,235,59,${0.5 + 0.5 * Math.sin(this.t * 8)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.jet.x, this.jet.y, 24, 0, TAU); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`${this.jet.clicks}/5`, this.jet.x, this.jet.y - 32); }
+    }
+    // грязь
+    const cw = 560 / this.gw, ch = 300 / this.gh;
+    for (let gy = 0; gy < this.gh; gy++) for (let gx = 0; gx < this.gw; gx++) {
+      const v = this.grid[gy * this.gw + gx];
+      if (v <= 0.02) continue;
+      ctx.fillStyle = `rgba(${50 + gx % 3 * 8},${35 + gy % 2 * 6},20,${v * 0.95})`;
+      ctx.fillRect(120 + gx * cw, 75 + gy * ch, cw + 0.5, ch + 0.5);
+    }
+    if (this.held) { ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.beginPath(); ctx.arc(this.mx, this.my, 34, 0, TAU); ctx.fill(); }
+  }
+}
+
+// ---------- 3. Замена деталей + зазор свечи
+class PartsGame {
+  start(api) {
+    this.api = api; this.t = 0; this.drag = null; this.phase = 'place'; this.gap = 0.8;
+    this.slots = [
+      { id: 'plug', x: 250, y: 110, label: 'свеча', shape: 'plug' },
+      { id: 'hose', x: 240, y: 300, label: 'шланг', shape: 'hose' },
+      { id: 'mem', x: 420, y: 230, label: 'мембрана', shape: 'mem' },
+    ];
+    const tray = [['plug', 'plug'], ['hose', 'hose'], ['mem', 'mem'], ['bolt', 'bolt'], ['spring', 'spring'], ['washer', 'washer']];
+    tray.sort(() => Math.random() - 0.5);
+    this.parts = tray.map(([id, shape], i) => ({ id, shape, hx: 640 + (i % 2) * 90, hy: 80 + Math.floor(i / 2) * 110, x: 0, y: 0, placed: false }));
+    this.parts.forEach(p => { p.x = p.hx; p.y = p.hy; });
+    this.msg = 'Перетащи новые детали на свои места. Лишние детали… останутся лишними.';
+    this.ui();
+  }
+  ui() {
+    if (this.phase === 'gap') {
+      this.api.info(`<div class="mg-sec"><b>⚡ Зазор свечи</b></div><div class="mg-sec">Зазор: <b style="font-size:22px">${this.gap.toFixed(2)} мм</b></div>
+        <div class="mg-sec small">В инструкции к пиле: <i>«зазор свечи 0.5 мм»</i>. Подгибай электрод.</div>`);
+      this.api.buttons([
+        { label: '− 0.05', onClick: () => { this.gap = Math.max(0.2, this.gap - 0.05); Sfx.ratchet(); this.ui(); } },
+        { label: '+ 0.05', onClick: () => { this.gap = Math.min(1.2, this.gap + 0.05); Sfx.ratchet(); this.ui(); } },
+        { label: '✅ Вкрутить свечу', cls: 'primary', onClick: () => {
+          if (Math.abs(this.gap - 0.5) < 0.026) Motor.complete('Свеча, шланг и мембраны на месте!');
+          else { Sfx.error(); this.msg = this.gap > 0.5 ? 'Искра слабая — слишком большой зазор.' : 'Искры почти нет — зазор маленький.'; UI.toast(this.msg, 'bad'); }
+        } },
+      ]);
+      return;
+    }
+    this.api.info(`<div class="mg-sec"><b>🧩 Замена деталей</b></div><div class="mg-log"><div>${this.msg}</div></div>`);
+    this.api.buttons([]);
+  }
+  down(x, y) {
+    if (this.phase !== 'place') return;
+    this.drag = this.parts.find(p => !p.placed && dist(x, y, p.x, p.y) < 40) || null;
+    if (this.drag) { this.ox = this.drag.x - x; this.oy = this.drag.y - y; }
+  }
+  move(x, y) { if (this.drag) { this.drag.x = x + this.ox; this.drag.y = y + this.oy; } }
+  up() {
+    const p = this.drag; this.drag = null; if (!p) return;
+    const slot = this.slots.find(s => dist(p.x, p.y, s.x, s.y) < 55);
+    if (slot && slot.id === p.id) {
+      p.placed = true; p.x = slot.x; p.y = slot.y; Sfx.tone(500, 0.08, 'triangle', 0.15);
+      this.msg = 'Встало как родное!';
+      if (this.slots.every(s => this.parts.find(q => q.id === s.id).placed)) { this.phase = 'gap'; Sfx.success(); }
+    } else {
+      if (slot) { Sfx.error(); this.msg = 'Не подходит!'; }
+      else if (['bolt', 'spring', 'washer'].includes(p.id) && p.x < 600) { this.msg = 'Это лишняя деталь… Откуда она вообще?'; }
+      p.x = p.hx; p.y = p.hy;
+    }
+    this.ui();
+  }
+  shape(ctx, s, x, y, ghost) {
+    ctx.save(); ctx.translate(x, y);
+    ctx.globalAlpha = ghost ? 0.3 : 1;
+    ctx.fillStyle = ghost ? '#000' : null;
+    if (s === 'plug') {
+      if (!ghost) ctx.fillStyle = '#eceff1'; ctx.fillRect(-10, -35, 20, 40);
+      if (!ghost) ctx.fillStyle = '#90a4ae'; ctx.fillRect(-14, 0, 28, 14); ctx.fillRect(-6, 14, 12, 18);
+    } else if (s === 'hose') {
+      ctx.strokeStyle = ghost ? '#000' : '#ffb300'; ctx.lineWidth = 10;
+      ctx.beginPath(); ctx.moveTo(-35, -10); ctx.bezierCurveTo(-10, 30, 10, -30, 35, 10); ctx.stroke();
+    } else if (s === 'mem') {
+      if (!ghost) ctx.fillStyle = '#212121'; ctx.beginPath(); ctx.ellipse(0, 0, 32, 22, 0, 0, TAU); ctx.fill();
+      if (!ghost) { ctx.fillStyle = '#424242'; ctx.beginPath(); ctx.arc(0, 0, 8, 0, TAU); ctx.fill(); }
+    } else if (s === 'bolt') {
+      ctx.fillStyle = '#9e9e9e'; ctx.fillRect(-5, -20, 10, 40); ctx.fillRect(-12, -26, 24, 8);
+    } else if (s === 'spring') {
+      ctx.strokeStyle = '#bdbdbd'; ctx.lineWidth = 3; ctx.beginPath();
+      for (let i = 0; i <= 40; i++) ctx.lineTo(Math.sin(i * 1.2) * 10, -20 + i);
+      ctx.stroke();
+    } else if (s === 'washer') {
+      ctx.strokeStyle = '#bdbdbd'; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0, 0, 13, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  update(dt) { this.t += dt; }
+  draw(ctx) {
+    ctx.fillStyle = '#37474f'; ctx.fillRect(0, 0, 800, 450);
+    drawSaw(ctx, 300, 240, 0.95, true);
+    ctx.fillStyle = '#263238'; roundRect(ctx, 600, 30, 190, 390, 14); ctx.fill();
+    ctx.fillStyle = '#90a4ae'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Коробка с деталями', 695, 52);
+    for (const s of this.slots) {
+      const p = this.parts.find(q => q.id === s.id);
+      if (!p.placed) {
+        this.shape(ctx, s.shape, s.x, s.y, true);
+        ctx.strokeStyle = `rgba(255,235,59,${0.4 + 0.3 * Math.sin(this.t * 4)})`; ctx.setLineDash([6, 5]); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(s.x, s.y, 48, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+      }
+    }
+    for (const p of this.parts) if (p !== this.drag) this.shape(ctx, p.shape, p.x, p.y, false);
+    if (this.drag) this.shape(ctx, this.drag.shape, this.drag.x, this.drag.y, false);
+    if (this.phase === 'gap') {
+      ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(0, 0, 800, 450);
+      ctx.save(); ctx.translate(400, 230);
+      ctx.fillStyle = '#eceff1'; ctx.fillRect(-30, -200, 60, 120);
+      ctx.fillStyle = '#90a4ae'; ctx.fillRect(-40, -80, 80, 70);
+      ctx.fillStyle = '#bdbdbd'; ctx.fillRect(-8, -10, 16, 50);
+      const g = this.gap * 120;
+      ctx.fillStyle = '#9e9e9e'; ctx.fillRect(-40, 40 + g, 60, 14); ctx.fillRect(-40, -10, 14, 64 + g);
+      if (Math.abs(this.gap - 0.5) < 0.026 && Math.sin(this.t * 20) > 0) { ctx.strokeStyle = '#80d8ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 40); ctx.lineTo(4, 40 + g / 2); ctx.lineTo(-3, 40 + g); ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+}
+
+// ---------- 4. Токарный станок: тайминг
+class LatheGame {
+  start(api) {
+    this.api = api; this.t = 0; this.pos = 0; this.dir = 1; this.speed = 0.7;
+    this.zone = 0.22; this.zc = rand(0.3, 0.7); this.hits = 0; this.miss = 0; this.need = 6; this.flash = 0; this.sparks = []; this.over = false;
+    this.ui();
+  }
+  ui() {
+    this.api.info(`<div class="mg-sec"><b>⚙️ Вал и звёздочка</b></div>
+      <div class="mg-sec">Проходов: <b>${this.hits}/${this.need}</b><br>Промахи: <b style="color:${this.miss ? '#ff5252' : '#fff'}">${this.miss}/3</b></div>
+      <div class="mg-sec small">Жми <b>«Резец!»</b> (или пробел), когда бегунок в зелёной зоне. Каждый проход точнее и быстрее. 3 промаха — заготовка в брак!</div>`);
+    this.api.buttons([{ label: '🔪 Резец!', cls: 'primary', onClick: () => this.cut() }]);
+  }
+  key(code) { if (code === 'Space' || code === 'Enter') this.cut(); }
+  down(x, y) { if (y > 330) this.cut(); }
+  cut() {
+    if (this.over) return;
+    if (Math.abs(this.pos - this.zc) <= this.zone / 2) {
+      this.hits++; this.flash = 0.3; Sfx.noise(0.25, 0.3, 3000, 'bandpass');
+      for (let i = 0; i < 25; i++) this.sparks.push({ x: 400, y: 190, vx: rand(-200, 200), vy: rand(-250, -50), life: rand(0.3, 0.8) });
+      this.zone *= 0.84; this.speed *= 1.15; this.zc = rand(0.15, 0.85);
+      if (this.hits >= this.need) { this.over = true; setTimeout(() => Motor.complete('Звёздочка выточена и насажена на вал!'), 600); }
+    } else {
+      this.miss++; Sfx.error(); this.flash = -0.3;
+      if (this.miss >= 3) {
+        this.over = true;
+        S.inv.sprocket = Math.max(0, (S.inv.sprocket || 0) - 1); Save.save();
+        setTimeout(() => { UI.modal('Брак! 💢', 'Резец сорвался и запорол заготовку.<br>Звёздочку придётся купить заново.'); MG.close(false); }, 500);
+      }
+    }
+    this.ui();
+  }
+  update(dt) {
+    this.t += dt;
+    if (!this.over) {
+      this.pos += this.dir * this.speed * dt;
+      if (this.pos > 1) { this.pos = 1; this.dir = -1; } if (this.pos < 0) { this.pos = 0; this.dir = 1; }
+    }
+    this.flash = this.flash > 0 ? Math.max(0, this.flash - dt) : Math.min(0, this.flash + dt);
+    for (const s of this.sparks) { s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 600 * dt; s.life -= dt; }
+    this.sparks = this.sparks.filter(s => s.life > 0);
+  }
+  draw(ctx) {
+    ctx.fillStyle = this.flash < 0 ? '#4a1414' : '#263238'; ctx.fillRect(0, 0, 800, 450);
+    // станок
+    ctx.fillStyle = '#546e7a'; ctx.fillRect(60, 250, 680, 40);
+    ctx.fillStyle = '#37474f'; ctx.fillRect(80, 120, 120, 140);
+    ctx.fillStyle = '#78909c'; ctx.fillRect(200, 175, 400, 30);
+    // заготовка-звёздочка
+    ctx.save(); ctx.translate(400, 190); ctx.rotate(this.t * 25);
+    const teeth = Math.min(this.hits * 3, 18);
+    ctx.fillStyle = '#b0bec5'; ctx.beginPath();
+    for (let i = 0; i < 36; i++) { const a = i * TAU / 36; const r = i % 2 && i / 2 < teeth ? 52 : 62; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(0, 0, 14, 0, TAU); ctx.fill();
+    ctx.restore();
+    // резец
+    ctx.fillStyle = '#ffca28'; ctx.beginPath(); ctx.moveTo(470 - (this.flash > 0 ? 8 : 0), 190); ctx.lineTo(540, 175); ctx.lineTo(540, 205); ctx.closePath(); ctx.fill();
+    for (const s of this.sparks) { ctx.fillStyle = `rgba(255,200,0,${s.life * 1.5})`; ctx.fillRect(s.x, s.y, 3, 3); }
+    // шкала
+    const bx = 100, by = 350, bw = 600;
+    ctx.fillStyle = '#111'; roundRect(ctx, bx - 6, by - 6, bw + 12, 44, 10); ctx.fill();
+    ctx.fillStyle = '#b71c1c'; ctx.fillRect(bx, by, bw, 32);
+    ctx.fillStyle = '#00c853'; ctx.fillRect(bx + (this.zc - this.zone / 2) * bw, by, this.zone * bw, 32);
+    ctx.fillStyle = '#fff'; ctx.fillRect(bx + this.pos * bw - 3, by - 8, 6, 48);
+  }
+}
+
+// ---------- 5. Сварка рамы: веди по шву
+class WeldGame {
+  start(api) {
+    this.api = api; this.t = 0; this.held = false; this.mx = 0; this.my = 0;
+    this.seams = [
+      [[150, 150], [300, 140], [450, 160], [620, 150]],
+      [[200, 330], [260, 250], [330, 200], [420, 180]],
+      [[480, 330], [520, 260], [600, 230], [660, 260], [680, 330]],
+    ];
+    this.si = 0; this.prog = 0; this.defects = 0; this.cool = 0; this.sparks = []; this.done = [];
+    this.build();
+    this.ui();
+  }
+  build() {
+    // разбиваем шов на точки через 4px
+    const s = this.seams[this.si], pts = [];
+    for (let i = 0; i < s.length - 1; i++) {
+      const [ax, ay] = s[i], [bx, by] = s[i + 1];
+      const n = Math.ceil(dist(ax, ay, bx, by) / 4);
+      for (let k = 0; k < n; k++) pts.push([lerp(ax, bx, k / n), lerp(ay, by, k / n)]);
+    }
+    pts.push(s[s.length - 1]);
+    this.pts = pts; this.prog = 0; this.defects = 0;
+  }
+  ui() {
+    this.api.info(`<div class="mg-sec"><b>🔥 Сварка рамы</b></div>
+      <div class="mg-sec">Шов: <b>${this.si + 1}/${this.seams.length}</b><div class="bar"><i style="width:${Math.round(this.prog / (this.pts.length - 1) * 100)}%"></i></div></div>
+      <div class="mg-sec">Непровары: <b style="color:${this.defects > 2 ? '#ff5252' : '#fff'}">${this.defects}/5</b></div>
+      <div class="mg-sec small">Зажми у начала шва (жёлтая точка) и веди электрод по линии. Сойдёшь с линии — непровар. 5 непроваров — шов переваривать.</div>`);
+    this.api.buttons([]);
+  }
+  down(x, y) { this.held = true; this.mx = x; this.my = y; }
+  move(x, y) { this.mx = x; this.my = y; }
+  up() { this.held = false; }
+  update(dt) {
+    this.t += dt; this.cool -= dt;
+    if (this.held && this.si < this.seams.length) {
+      const [px, py] = this.pts[this.prog];
+      const d = dist(this.mx, this.my, px, py);
+      if (d < 26) {
+        // продвигаемся к ближайшей точке впереди
+        let best = this.prog;
+        for (let i = this.prog; i < Math.min(this.pts.length, this.prog + 12); i++) if (dist(this.mx, this.my, this.pts[i][0], this.pts[i][1]) < 16) best = i;
+        if (best > this.prog) { this.prog = best; if (Math.random() < 0.5) Sfx.noise(0.06, 0.12, 3000, 'highpass'); }
+        for (let i = 0; i < 2; i++) this.sparks.push({ x: this.mx, y: this.my, vx: rand(-150, 150), vy: rand(-180, 40), life: rand(0.2, 0.5) });
+        if (this.prog >= this.pts.length - 1) {
+          this.done.push(this.pts); this.si++; Sfx.success();
+          if (this.si >= this.seams.length) { this.held = false; Motor.complete('Рама сварена! Петрович одобрительно кивнул.'); return; }
+          this.build(); this.held = false;
+        }
+      } else if (this.prog > 0 && this.cool <= 0) {
+        this.defects++; this.cool = 0.5; Sfx.error();
+        if (this.defects >= 5) { UI.toast('Шов кривой — срезаем и варим заново', 'bad'); this.build(); }
+      }
+      if (Math.floor(this.t * 5) !== Math.floor((this.t - dt) * 5)) this.ui();
+    }
+    for (const s of this.sparks) { s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 500 * dt; s.life -= dt; }
+    this.sparks = this.sparks.filter(s => s.life > 0);
+  }
+  draw(ctx) {
+    ctx.fillStyle = '#0b0f0d'; ctx.fillRect(0, 0, 800, 450);
+    // заготовки (видны тускло — маска сварщика)
+    ctx.strokeStyle = '#2e3b33'; ctx.lineWidth = 18;
+    for (const s of this.seams) { ctx.beginPath(); s.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.stroke(); }
+    // готовые швы
+    ctx.strokeStyle = '#8d8d6e'; ctx.lineWidth = 6;
+    for (const pts of this.done) { ctx.beginPath(); pts.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.stroke(); }
+    if (this.si < this.seams.length) {
+      ctx.setLineDash([5, 7]); ctx.strokeStyle = '#4caf50'; ctx.lineWidth = 2;
+      ctx.beginPath(); this.pts.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.stroke(); ctx.setLineDash([]);
+      // текущий шов: горячий
+      ctx.lineWidth = 7;
+      for (let i = 1; i <= this.prog; i++) {
+        const age = (this.prog - i) / 40;
+        ctx.strokeStyle = age < 1 ? `rgb(255,${Math.round(120 + age * 80)},${Math.round(age * 100)})` : '#8d8d6e';
+        ctx.beginPath(); ctx.moveTo(this.pts[i - 1][0], this.pts[i - 1][1]); ctx.lineTo(this.pts[i][0], this.pts[i][1]); ctx.stroke();
+      }
+      const [px, py] = this.pts[this.prog];
+      ctx.fillStyle = `rgba(255,235,59,${0.5 + 0.5 * Math.sin(this.t * 10)})`; ctx.beginPath(); ctx.arc(px, py, 7, 0, TAU); ctx.fill();
+    }
+    if (this.held) {
+      const g = ctx.createRadialGradient(this.mx, this.my, 0, this.mx, this.my, 70);
+      g.addColorStop(0, 'rgba(220,240,255,0.95)'); g.addColorStop(0.15, 'rgba(120,200,255,0.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(this.mx, this.my, 70, 0, TAU); ctx.fill();
+    }
+    for (const s of this.sparks) { ctx.fillStyle = `rgba(255,220,120,${s.life * 2})`; ctx.fillRect(s.x, s.y, 2, 2); }
+    ctx.fillStyle = '#4caf50'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('Вид через маску сварщика', 12, 20);
+  }
+}
+
+// ---------- 6. Колесо и цепь
+class ChainGame {
+  start(api) {
+    this.api = api; this.t = 0; this.tension = 20; this.align = randi(4, 7) * (Math.random() < 0.5 ? -1 : 1); this.spin = 0; this.jump = 0;
+    this.ui();
+  }
+  ok() { return this.tension >= 55 && this.tension <= 70 && this.align === 0; }
+  ui() {
+    const tStr = this.tension < 55 ? 'провисает' : this.tension > 70 ? 'перетянута' : 'в самый раз';
+    this.api.info(`<div class="mg-sec"><b>🛞 Колесо и цепь</b></div>
+      <div class="mg-sec">Натяжение: <b>${tStr}</b><div class="bar"><i style="width:${this.tension}%"></i></div></div>
+      <div class="mg-sec">Соосность: <b>${this.align === 0 ? 'ровно ✓' : (this.align > 0 ? 'колесо смотрит вправо' : 'колесо смотрит влево')}</b></div>
+      <div class="mg-sec small">Цепь должна чуть-чуть провисать (пальцем на 1 см). Колесо — строго в линию со звёздочкой. «Крутануть» — проверить.</div>`);
+    this.api.buttons([
+      { label: '⬅ Натяжитель', onClick: () => { this.tension = Math.max(0, this.tension - 5); Sfx.ratchet(); this.ui(); } },
+      { label: 'Натяжитель ➡', onClick: () => { this.tension = Math.min(100, this.tension + 5); Sfx.ratchet(); this.ui(); } },
+      { label: '↺ Ось', onClick: () => { this.align--; Sfx.ratchet(); this.ui(); } },
+      { label: 'Ось ↻', onClick: () => { this.align++; Sfx.ratchet(); this.ui(); } },
+      { label: '🌀 Крутануть', onClick: () => this.test() },
+      { label: '🔩 Затянуть гайки', cls: 'primary', onClick: () => {
+        if (this.ok()) Motor.complete('Колесо стоит ровно, цепь натянута!');
+        else { Sfx.error(); UI.toast(this.tension > 70 ? 'Перетянул — цепь звенит как струна!' : this.tension < 55 ? 'Цепь слетит на первой кочке!' : 'Колесо кривое — цепь будет слетать', 'bad'); }
+      } },
+    ]);
+  }
+  test() {
+    this.spin = 2;
+    if (this.align !== 0 || this.tension < 55) { this.jump = 1.2; Sfx.noise(0.4, 0.3, 800); setTimeout(() => UI.toast('Цепь спрыгнула! 😬', 'bad'), 500); }
+    else if (this.tension > 70) { Sfx.tone(200, 0.4, 'sawtooth', 0.08); setTimeout(() => UI.toast('Туго крутится, скрипит', 'bad'), 400); }
+    else { Sfx.noise(0.6, 0.15, 1500, 'bandpass'); setTimeout(() => UI.toast('Крутится ровно и тихо 👌', 'good'), 400); }
+  }
+  update(dt) { this.t += dt; this.spin = Math.max(0, this.spin - dt); this.jump = Math.max(0, this.jump - dt); }
+  draw(ctx) {
+    ctx.fillStyle = '#37474f'; ctx.fillRect(0, 0, 800, 450);
+    ctx.fillStyle = '#263238'; ctx.fillRect(0, 380, 800, 70);
+    const sx = 240, sy = 200, wx = 520 + this.tension * 0.6, wy = 280;
+    const rot = this.t * (this.spin > 0 ? 12 : 0);
+    // звёздочка мотора
+    ctx.save(); ctx.translate(sx, sy); ctx.rotate(rot);
+    ctx.fillStyle = '#b0bec5'; ctx.beginPath(); for (let i = 0; i < 20; i++) { const a = i * TAU / 20, r = i % 2 ? 26 : 32; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); ctx.fill();
+    ctx.restore();
+    // колесо (вид сверху-сбоку — наклон показывает соосность)
+    ctx.save(); ctx.translate(wx, wy); ctx.rotate(rot);
+    ctx.scale(1 - Math.abs(this.align) * 0.05, 1);
+    ctx.fillStyle = '#212121'; ctx.beginPath(); ctx.arc(0, 0, 90, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#9e9e9e'; ctx.lineWidth = 3;
+    for (let i = 0; i < 16; i++) { const a = i * TAU / 16; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 88, Math.sin(a) * 88); ctx.lineTo(Math.cos(a) * 100, Math.sin(a) * 100); ctx.stroke(); }
+    ctx.fillStyle = '#616161'; ctx.beginPath(); ctx.arc(0, 0, 40, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#b0bec5'; ctx.beginPath(); for (let i = 0; i < 30; i++) { const a = i * TAU / 30, r = i % 2 ? 30 : 36; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); ctx.fill();
+    ctx.restore();
+    // цепь
+    const sag = Math.max(0, 60 - this.tension) * 1.4 + 6 + (this.jump > 0 ? Math.sin(this.t * 40) * 25 : 0);
+    ctx.strokeStyle = '#757575'; ctx.lineWidth = 6; ctx.setLineDash([6, 3]);
+    ctx.beginPath(); ctx.moveTo(sx, sy - 30); ctx.lineTo(wx, wy - 36); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx, sy + 30); ctx.quadraticCurveTo((sx + wx) / 2, (sy + wy) / 2 + 36 + sag, wx, wy + 36); ctx.stroke();
+    ctx.setLineDash([]);
+    // индикатор соосности
+    ctx.strokeStyle = this.align === 0 ? '#69f0ae' : '#ff5252'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(wx, 140); ctx.lineTo(wx + this.align * 8, 120); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('соосность', wx, 110);
+  }
+}
+
+// ---------- 7. Первый запуск: подсос и стартер
+class StartGame {
+  start(api) {
+    this.api = api; this.t = 0; this.choke = false; this.pop = false; this.flooded = false; this.running = false;
+    this.handle = { y: 0, drag: false, startY: 0, startT: 0 }; this.dry = 0; this.drying = false; this.pulls = 0; this.smoke = [];
+    this.msg = 'Холодный мотор: включи подсос, потом резко дёрни шнур вниз.';
+    this.ui();
+  }
+  ui() {
+    this.api.info(`<div class="mg-sec"><b>🔥 Первый запуск</b></div>
+      <div class="mg-sec">Подсос: <b>${this.choke ? 'ВКЛ' : 'выкл'}</b> · Рывков: ${this.pulls}</div>
+      <div class="mg-sec small">Тяни ручку стартера <b>резко вниз</b>. Как мотор «чихнёт» — выключай подсос. Перестараешься с подсосом — зальёшь свечу.</div>
+      <div class="mg-log"><div>${this.msg}</div></div>`);
+    const b = [];
+    if (this.running) b.push({ label: '✅ Отлично!', cls: 'primary', onClick: () => Motor.complete('ДРРРРРРР! Мотор завёлся! Соседи в восторге (нет).') });
+    else {
+      b.push({ label: this.choke ? '🟢 Подсос ВКЛ' : '⚪ Подсос выкл', active: this.choke, onClick: () => { this.choke = !this.choke; Sfx.click(); this.ui(); } });
+      if (this.flooded) b.push({ label: this.drying ? '⏳ Сушим…' : '🔧 Выкрутить и просушить свечу', disabled: this.drying, onClick: () => { this.drying = true; this.dry = 0; this.ui(); } });
+    }
+    this.api.buttons(b);
+  }
+  down(x, y) { if (!this.running && dist(x, y, 200, 180 + this.handle.y) < 50) { this.handle.drag = true; this.handle.startY = y; this.handle.startT = this.t; } }
+  move(x, y) { if (this.handle.drag) { this.handle.y = clamp(y - this.handle.startY, 0, 220); if (Math.random() < 0.3) Sfx.ratchet(); } }
+  up() {
+    if (!this.handle.drag) return;
+    this.handle.drag = false;
+    const len = this.handle.y, time = this.t - this.handle.startT;
+    if (len > 150 && time < 0.6) this.pull(); else if (len > 30) { this.msg = 'Слабо дёрнул! Резче и до конца.'; this.ui(); }
+  }
+  pull() {
+    this.pulls++;
+    Sfx.noise(0.3, 0.2, 600);
+    // залезть в бак
+    S.tank.fuel = Math.max(0, S.tank.fuel - 2);
+    if (this.flooded) { this.msg = 'Тишина. Свеча мокрая — залил.'; this.ui(); return; }
+    if (this.choke) {
+      if (this.pop) {
+        if (Math.random() < 0.6) { this.flooded = true; this.pop = false; this.msg = '💧 Залил свечу! Надо было выключить подсос.'; Sfx.error(); }
+        else { this.msg = 'Чих-пых… Выключи подсос!'; Sfx.pop(); }
+      } else if (Math.random() < 0.35) { this.pop = true; this.msg = '💨 ЧИХ! Схватило! Теперь выключи подсос и дёргай.'; Sfx.pop(); this.puff(); }
+      else this.msg = 'Пока не схватывает. Ещё!';
+    } else {
+      const chance = this.pop ? 0.55 : 0.07;
+      if (Math.random() < chance) { this.running = true; this.msg = '🎉 ЗАВЁЛСЯ!'; Sfx.success(); Sfx.setEngine(true, 0.25); this.puff(); this.puff(); }
+      else this.msg = this.pop ? 'Почти! Ещё раз!' : 'Не схватывает… На холодную без подсоса тяжело.';
+    }
+    this.ui();
+  }
+  puff() { for (let i = 0; i < 12; i++) this.smoke.push({ x: 600, y: 160, vx: rand(20, 80), vy: rand(-60, -20), life: rand(1, 2) }); }
+  update(dt) {
+    this.t += dt;
+    if (!this.handle.drag && this.handle.y > 0) this.handle.y = Math.max(0, this.handle.y - dt * 900);
+    if (this.drying) { this.dry += dt / 3; if (this.dry >= 1) { this.drying = false; this.flooded = false; this.choke = false; this.msg = 'Свеча сухая. Подсос выключен. Пробуй.'; this.ui(); } }
+    if (this.running) { Sfx.setEngine(true, 0.2 + Math.sin(this.t * 3) * 0.03); if (Math.random() < dt * 8) this.puff(); }
+    for (const s of this.smoke) { s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt; }
+    this.smoke = this.smoke.filter(s => s.life > 0);
+  }
+  draw(ctx) {
+    ctx.fillStyle = '#455a64'; ctx.fillRect(0, 0, 800, 450);
+    ctx.fillStyle = '#37474f'; ctx.fillRect(0, 360, 800, 90);
+    const shake = this.running ? Math.sin(this.t * 70) * 2 : 0;
+    ctx.save(); ctx.translate(shake, 0);
+    drawSaw(ctx, 470, 200, 0.9);
+    ctx.restore();
+    // шнур и ручка
+    const hy = 180 + this.handle.y;
+    ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(335, 170); ctx.lineTo(200, hy); ctx.stroke();
+    ctx.fillStyle = '#212121'; roundRect(ctx, 165, hy - 12, 70, 24, 10); ctx.fill();
+    if (!this.running && this.handle.y === 0) { ctx.fillStyle = `rgba(255,255,255,${0.5 + 0.5 * Math.sin(this.t * 5)})`; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('⬇ тяни', 200, 230); }
+    for (const s of this.smoke) { ctx.fillStyle = `rgba(200,200,220,${s.life * 0.3})`; ctx.beginPath(); ctx.arc(s.x, s.y, 14 + (2 - s.life) * 10, 0, TAU); ctx.fill(); }
+    if (this.drying) { ctx.fillStyle = '#000a'; ctx.fillRect(250, 400, 300, 20); ctx.fillStyle = '#ffb300'; ctx.fillRect(250, 400, 300 * this.dry, 20); }
+  }
+  exit() { Sfx.setEngine(false); }
+}
+
+// ---------- 8. Регулировка карбюратора (винты L и H)
+class TuneGame {
+  start(api) {
+    this.api = api; this.t = 0; this.L = 50; this.H = 50; this.tL = randi(25, 75); this.tH = randi(25, 75);
+    this.gas = false; this.rpm = 0.2; this.temp = 0.3; this.good = 0; this.done = false;
+    this.ui();
+    this.renderSliders();
+  }
+  renderSliders() {
+    const box = document.createElement('div');
+    box.className = 'mg-sliders';
+    box.innerHTML = `<label>Винт L (холостой) <input type="range" min="0" max="100" value="${this.L}" id="tuneL"></label>
+      <label>Винт H (максимал) <input type="range" min="0" max="100" value="${this.H}" id="tuneH"></label>`;
+    $('#mg-info').appendChild(box);
+    $('#tuneL').oninput = e => { this.L = +e.target.value; Sfx.ratchet(); };
+    $('#tuneH').oninput = e => { this.H = +e.target.value; Sfx.ratchet(); };
+  }
+  ui() {
+    this.api.info(`<div class="mg-sec"><b>🎛️ Регулировка карбюратора</b></div>
+      <div class="mg-sec small">Крути <b>L</b>, пока холостые не станут ровными (стрелка «Стабильность» в зелёном).<br>Потом зажми <b>«ГАЗ»</b> и крути <b>H</b>: нужны максимальные обороты, но <b>без перегрева</b> (слишком бедная смесь греет мотор).</div>
+      <div class="mg-sec small" id="tuneStatus">Держи обе стрелки в зелёном 2 секунды.</div>`);
+    this.api.buttons([{ label: '🔥 ГАЗ (держать)', cls: 'primary', hold: on => { this.gas = on; } }]);
+  }
+  update(dt) {
+    this.t += dt;
+    const dL = Math.abs(this.L - this.tL), dH = this.H - this.tH;
+    this.stab = clamp(100 - dL * 3.5 + Math.sin(this.t * 7) * (dL / 4), 0, 100);
+    const target = this.gas ? clamp(1 - Math.abs(dH) / 45, 0.2, 1) : 0.18 + (100 - this.stab) / 400 * Math.sin(this.t * 9);
+    this.rpm = lerp(this.rpm, target, dt * 4);
+    const lean = this.gas && dH < -6;
+    this.temp = clamp(this.temp + (lean ? dt * 0.25 * (-dH / 20) : -dt * 0.15), 0.2, 1);
+    Sfx.setEngine(!this.done, this.rpm);
+    const ok = this.stab >= 85 && this.gas && this.rpm >= 0.9 && this.temp < 0.7;
+    this.good = ok ? this.good + dt : 0;
+    if (this.good >= 2 && !this.done) {
+      this.done = true; Sfx.setEngine(false);
+      S.tank.fuel = Math.max(0, S.tank.fuel - 20);
+      Motor.complete('Мотор поёт! Снегокат с мотором готов! 🏁');
+    }
+    if (this.temp >= 1 && !this.done) {
+      this.temp = 0.5; this.H = Math.min(100, this.H + 10); const el = $('#tuneH'); if (el) el.value = this.H;
+      Sfx.error(); UI.toast('🔥 Перегрев! Мотор заглох. Смесь слишком бедная — открой H.', 'bad');
+    }
+    const st = $('#tuneStatus');
+    if (st && Math.floor(this.t * 4) !== Math.floor((this.t - dt) * 4)) st.innerHTML = ok ? `Держи… ${(2 - this.good).toFixed(1)} с` : (this.temp > 0.7 ? '🔥 Температура высокая!' : 'Держи обе стрелки в зелёном 2 секунды.');
+  }
+  gauge(ctx, x, y, label, v, zone, color) {
+    ctx.fillStyle = '#212121'; ctx.beginPath(); ctx.arc(x, y, 80, Math.PI, 0); ctx.fill();
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = '#424242'; ctx.beginPath(); ctx.arc(x, y, 64, Math.PI, 0); ctx.stroke();
+    ctx.strokeStyle = color; ctx.beginPath(); ctx.arc(x, y, 64, Math.PI + zone[0] * Math.PI, Math.PI + zone[1] * Math.PI); ctx.stroke();
+    const a = Math.PI + clamp(v, 0, 1) * Math.PI;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 70, y + Math.sin(a) * 70); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, x, y + 22);
+  }
+  draw(ctx) {
+    ctx.fillStyle = '#263238'; ctx.fillRect(0, 0, 800, 450);
+    const shake = Math.sin(this.t * 80) * (1 + this.rpm * 3);
+    ctx.save(); ctx.translate(shake, 0); drawSaw(ctx, 420, 140, 0.55); ctx.restore();
+    this.gauge(ctx, 150, 380, 'Стабильность', this.stab / 100, [0.85, 1], '#00c853');
+    this.gauge(ctx, 400, 380, 'Обороты ×1000', this.rpm, [0.9, 1], '#00c853');
+    this.gauge(ctx, 650, 380, 'Температура', this.temp, [0.7, 1], '#d50000');
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 18px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round(this.rpm * 13000) + ' об/мин', 400, 300);
+  }
+  exit() { Sfx.setEngine(false); }
+}
+
+const MOTOR_GAMES = { bolts: BoltsGame, clean: CleanGame, parts: PartsGame, lathe: LatheGame, weld: WeldGame, chain: ChainGame, start: StartGame, tune: TuneGame };
+
+const Motor = {
+  stage() { return MOTOR_STAGES[S.motor.stage]; },
+  missing(st) {
+    const out = [];
+    for (const k in st.req) if ((S.inv[k] || 0) < st.req[k]) out.push(ITEMS[k].name);
+    if (st.fuel && S.tank.fuel < st.fuel) out.push(`смесь в баке ≥ ${st.fuel} мл`);
+    return out;
+  },
+  begin() {
+    const st = this.stage();
+    if (!st) return;
+    const miss = this.missing(st);
+    if (miss.length) { UI.toast('Не хватает: ' + miss.join(', '), 'bad'); return; }
+    if (st.id === 'buy') { this.completing = false; this.complete('Пила в гараже. Пахнет бензином и приключениями.'); return; }
+    this.completing = false;
+    MG.open(`Мотор: ${st.name}`, new MOTOR_GAMES[st.id]());
+  },
+  complete(msg) {
+    if (this.completing) return;
+    this.completing = true;
+    const st = this.stage();
+    for (const k in st.req) S.inv[k] = Math.max(0, (S.inv[k] || 0) - st.req[k]);
+    S.motor.stage++;
+    if (S.motor.stage >= MOTOR_STAGES.length) {
+      S.motor.done = true; S.mods.motor = true; S.motor.health = 100;
+      App.ach('motor');
+    }
+    Save.save();
+    Sfx.success();
+    setTimeout(() => {
+      MG.close(false);
+      UI.modal(`${st.icon} ${st.name} — готово!`, `<p>${msg}</p>${S.motor.done
+        ? '<p><b>Теперь снегокат едет сам!</b> На горке держи <b>W / ↑</b> — газ. Следи за топливом и правильно мешай смесь 1:50.</p>'
+        : `<p>Следующий этап: <b>${MOTOR_STAGES[S.motor.stage].name}</b></p>`}`);
+    }, 300);
+  },
+};
+
+</script>
+<script>
+'use strict';
+// ===== Горка: физика, трюки, стройка лопатой, ночь =====
+const G = 600;              // гравитация, единиц/с² (40 единиц ≈ 1 м)
+const UNITS_PER_M = 40;
+
+const Ride = {
+  W: 6000, STEP: 10, N: 601, START_EDIT: 1150, END_EDIT: 5750,
+  h: null, ice: null, active: false, mode: 'ride', terrainDirty: false,
+  K: {}, keyEdge: {},
+  cam: { x: 0, y: 0, z: 1 },
+  tool: 'raise',
+  brush: { on: false, sx: 0, sy: 0, wx: 0, wy: 0 },
+  popups: [], parts: [], flakes: [],
+
+  // ---------- инициализация
+  init() {
+    this.cv = $('#ride-canvas');
+    this.ctx = this.cv.getContext('2d');
+    this.dark = document.createElement('canvas');
+    this.dctx = this.dark.getContext('2d');
+    window.addEventListener('resize', () => this.resize());
+    this.resize();
+    for (let i = 0; i < 140; i++) this.flakes.push({ x: Math.random(), y: Math.random(), s: rand(1, 3), v: rand(20, 60) });
+    this.stars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random() * 0.6, s: rand(0.5, 1.8), p: rand(0, 6) }));
+
+    const map = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'gas', KeyW: 'gas', ArrowDown: 'brake', KeyS: 'brake', Space: 'push', KeyQ: 'sigL', KeyE: 'sigR', KeyH: 'horn', KeyZ: 'KeyZ', KeyX: 'KeyX', KeyC: 'KeyC', KeyV: 'KeyV' };
+    window.addEventListener('keydown', e => {
+      if (!this.active || MG.game || UI.modalOpen()) return;
+      const k = map[e.code];
+      if (k) { if (!this.K[k]) this.keyEdge[k] = true; this.K[k] = true; e.preventDefault(); }
+      if (e.code === 'KeyR') this.restart();
+      if (e.code === 'KeyB') this.toggleBuild();
+      if (e.code === 'KeyN') this.toggleNight();
+      if (e.code === 'KeyL') this.toggleHead();
+    });
+    window.addEventListener('keyup', e => { const k = map[e.code]; if (k) this.K[k] = false; });
+    window.addEventListener('blur', () => { this.K = {}; });
+
+    // тач-кнопки
+    $$('#touch [data-k]').forEach(b => {
+      const k = b.dataset.k;
+      const on = e => { e.preventDefault(); if (!this.K[k]) this.keyEdge[k] = true; this.K[k] = true; b.classList.add('on'); };
+      const off = e => { e.preventDefault(); this.K[k] = false; b.classList.remove('on'); };
+      b.addEventListener('pointerdown', on);
+      b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
+    });
+    $('#r-garage').onclick = () => { Sfx.click(); App.go('garage'); };
+    $('#r-build').onclick = () => { Sfx.click(); this.toggleBuild(); };
+    $('#r-night').onclick = () => { Sfx.click(); this.toggleNight(); };
+    $('#r-restart').onclick = () => { Sfx.click(); this.restart(); };
+    $('#r-light').onclick = () => { Sfx.click(); this.toggleHead(); };
+
+    // стройка
+    $$('#build-bar [data-tool]').forEach(b => b.onclick = () => { Sfx.click(); this.tool = b.dataset.tool; this.updateBuildBar(); });
+    $('#b-reset').onclick = () => UI.modal('Сбросить горку?', 'Все постройки исчезнут, снег вернётся в запас.', [
+      { label: 'Сбросить', cls: 'danger', onClick: () => { this.genTerrain(); S.snow = 600; this.terrainDirty = true; this.persist(); this.updateBuildBar(); } },
+      { label: 'Отмена' },
+    ]);
+    const pan = (dir, on) => { this.K[dir > 0 ? 'panR' : 'panL'] = on; };
+    [['#b-left', -1], ['#b-right', 1]].forEach(([id, d]) => {
+      const b = $(id);
+      b.addEventListener('pointerdown', e => { e.preventDefault(); pan(d, true); });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => pan(d, false)));
+    });
+
+    const wpos = e => {
+      const r = this.cv.getBoundingClientRect();
+      const sx = e.clientX - r.left, sy = e.clientY - r.top;
+      return [sx, sy, (sx - this.vw * 0.35) / this.cam.z + this.cam.x, (this.vh * 0.62 - sy) / this.cam.z + this.cam.y];
+    };
+    this.cv.addEventListener('pointerdown', e => {
+      if (this.mode !== 'build') return;
+      e.preventDefault();
+      this.cv.setPointerCapture(e.pointerId);
+      const [sx, sy, wx, wy] = wpos(e);
+      Object.assign(this.brush, { on: true, sx, sy, wx, wy });
+      if (this.tool === 'kicker' || this.tool === 'bigkicker' || this.tool === 'landing') { this.stamp(this.tool, wx); this.brush.on = false; }
+    });
+    this.cv.addEventListener('pointermove', e => {
+      const [sx, sy, wx, wy] = wpos(e);
+      Object.assign(this.brush, { sx, sy, wx, wy, hover: true });
+    });
+    const up = () => { if (this.brush.on) { this.brush.on = false; this.persist(); } };
+    this.cv.addEventListener('pointerup', up);
+    this.cv.addEventListener('pointercancel', up);
+    this.cv.addEventListener('wheel', e => { if (this.mode === 'build') { this.cam.x += (e.deltaY + e.deltaX) * 1.2; e.preventDefault(); } }, { passive: false });
+  },
+
+  resize() {
+    this.dpr = Math.min(2, window.devicePixelRatio || 1);
+    this.vw = window.innerWidth; this.vh = window.innerHeight;
+    this.cv.width = this.vw * this.dpr; this.cv.height = this.vh * this.dpr;
+    this.dark.width = this.cv.width; this.dark.height = this.cv.height;
+    this.cam.z = clamp(Math.min(this.vh / 620, this.vw / 980), 0.42, 1.7);
+  },
+
+  // ---------- рельеф
+  genTerrain() {
+    const h = new Float32Array(this.N);
+    for (let i = 0; i < this.N; i++) {
+      const x = i * this.STEP;
+      if (x <= 160) h[i] = 520;
+      else if (x < 1100) h[i] = 260 * (1 + Math.cos(Math.PI * (x - 160) / 940));
+      else h[i] = Math.sin(x * 0.004) * 4;
+      if (x > 5800) h[i] = Math.min(400, (x - 5800) * 1.6);
+    }
+    this.h = h;
+    this.ice = new Uint8Array(this.N);
+    // стартовые постройки
+    this.stamp('kicker', 1700, true);
+    this.stamp('landing', 2120, true);
+    this.stamp('kicker', 3000, true);
+  },
+  loadTerrain() {
+    if (S.terrain && S.terrain.length === this.N) {
+      this.h = Float32Array.from(S.terrain);
+      this.ice = new Uint8Array(this.N);
+      if (S.ice) for (let i = 0; i < this.N; i++) this.ice[i] = S.ice.charCodeAt(i) === 49 ? 1 : 0;
+    } else this.genTerrain();
+  },
+  persist() {
+    if (!this.h || !this.terrainDirty) return;
+    S.terrain = Array.from(this.h, v => Math.round(v * 10) / 10);
+    S.ice = Array.from(this.ice).join('');
+    this.terrainDirty = false;
+    Save.dirty();
+  },
+  H(x) {
+    const f = clamp(x / this.STEP, 0, this.N - 1.0001);
+    const i = Math.floor(f), t = f - i;
+    return this.h[i] + (this.h[i + 1] - this.h[i]) * t;
+  },
+  slope(x, d = 6) { return Math.atan2(this.H(x + d) - this.H(x - d), 2 * d); },
+  // наклон «под полозом» — по точке позади (по ходу движения), чтобы кромка трамплина подбрасывала
+  pslope(x, dir) { const d = 5; return dir >= 0 ? Math.atan2(this.H(x) - this.H(x - d), d) : Math.atan2(this.H(x + d) - this.H(x), d); },
+  isIce(x) { return this.ice[clamp(Math.round(x / this.STEP), 0, this.N - 1)] === 1; },
+
+  // ---------- стройка
+  stamp(kind, wx, free) {
+    const shapes = {
+      kicker: { H: 65, L: 140 },
+      bigkicker: { H: 105, L: 220 },
+      landing: { H: 85, L: 340 },
+    };
+    const s = shapes[kind];
+    const add = new Map();
+    for (let i = 0; i < this.N; i++) {
+      const x = i * this.STEP;
+      let v = 0;
+      if (kind === 'landing') {
+        if (x >= wx - 110 && x < wx) v = s.H * (0.5 - 0.5 * Math.cos(Math.PI * (x - (wx - 110)) / 110));
+        else if (x >= wx && x <= wx + s.L) v = s.H * (0.5 + 0.5 * Math.cos(Math.PI * (x - wx) / s.L));
+      } else {
+        if (x >= wx - s.L && x <= wx) v = s.H * Math.pow((x - (wx - s.L)) / s.L, 2);
+        else if (x > wx && x < wx + 30) v = s.H * (1 - (x - wx) / 30);
+      }
+      if (v > 0) {
+        if (!free && (x < this.START_EDIT || x > this.END_EDIT)) continue;
+        add.set(i, Math.min(v, 650 - this.h[i]));
+      }
+    }
+    let cost = 0; add.forEach(v => cost += Math.max(0, v) * this.STEP / 100);
+    if (!free) {
+      if (cost > S.snow) { UI.toast(`Мало снега: нужно ${Math.ceil(cost)}, есть ${Math.floor(S.snow)}. Покопай где-нибудь или купи самосвал.`, 'bad'); Sfx.error(); return; }
+      S.snow -= cost; S.snowMoved += cost;
+      if (S.snowMoved >= 1000) App.ach('builder');
+      Sfx.noise(0.4, 0.3, 700);
+      this.terrainDirty = true;
+    }
+    add.forEach((v, i) => { this.h[i] += Math.max(0, v); });
+    if (!free) { this.persist(); this.updateBuildBar(); }
+  },
+  applyBrush(dt) {
+    const b = this.brush; if (!b.on) return;
+    const big = !!S.tools.shovel2;
+    const R = big ? 90 : 60, rate = big ? 280 : 170;
+    const i0 = Math.max(0, Math.ceil((b.wx - R) / this.STEP)), i1 = Math.min(this.N - 1, Math.floor((b.wx + R) / this.STEP));
+    let moved = 0;
+    const old = this.h.slice(Math.max(0, i0 - 2), Math.min(this.N, i1 + 3));
+    const base = Math.max(0, i0 - 2);
+    for (let i = i0; i <= i1; i++) {
+      const x = i * this.STEP;
+      if (x < this.START_EDIT || x > this.END_EDIT) continue;
+      const w = 0.5 + 0.5 * Math.cos(Math.PI * Math.abs(x - b.wx) / R);
+      let dh = 0;
+      if (this.tool === 'raise') {
+        if (this.h[i] < b.wy) dh = Math.min(rate * dt * w, b.wy - this.h[i]);
+        const cost = dh * this.STEP / 100;
+        if (cost > S.snow) dh = S.snow * 100 / this.STEP;
+        dh = Math.min(dh, 650 - this.h[i]);
+      } else if (this.tool === 'dig') {
+        if (this.h[i] > b.wy) dh = -Math.min(rate * dt * w, this.h[i] - b.wy);
+        dh = Math.max(dh, -60 - this.h[i]);
+      } else if (this.tool === 'smooth') {
+        let avg = 0, n = 0;
+        for (let k = -3; k <= 3; k++) { const j = i + k - base; if (j >= 0 && j < old.length) { avg += old[j]; n++; } }
+        dh = (avg / n - this.h[i]) * Math.min(1, 8 * dt) * w;
+        if (dh > 0 && dh * this.STEP / 100 > S.snow) dh = 0;
+      } else if (this.tool === 'ice' || this.tool === 'unice') {
+        if (Math.abs(x - b.wx) < R * 0.7) {
+          const v = this.tool === 'ice' ? 1 : 0;
+          if (this.ice[i] !== v) { this.ice[i] = v; this.terrainDirty = true; }
+        }
+        continue;
+      }
+      if (dh) {
+        this.h[i] += dh;
+        const c = dh * this.STEP / 100;
+        S.snow = Math.max(0, S.snow - c);
+        moved += Math.abs(c);
+      }
+    }
+    if (moved > 0) {
+      this.terrainDirty = true;
+      S.snowMoved += moved;
+      if (S.snowMoved >= 1000) App.ach('builder');
+      if (Math.random() < dt * 6) Sfx.noise(0.15, 0.12, 900);
+      if (Math.random() < dt * 20) this.parts.push({ x: b.wx + rand(-20, 20), y: this.H(b.wx) + 5, vx: rand(-80, 80), vy: rand(60, 200), life: 0.7, type: 'snow' });
+      this.updateBuildBarSnow();
+    }
+  },
+  updateBuildBar() {
+    $$('#build-bar [data-tool]').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === this.tool);
+      if (b.dataset.tool === 'ice' || b.dataset.tool === 'unice') b.classList.toggle('hidden', !S.tools.bucket);
+    });
+    this.updateBuildBarSnow();
+  },
+  updateBuildBarSnow() { $('#b-snow').textContent = Math.floor(S.snow); },
+  toggleBuild() {
+    this.mode = this.mode === 'build' ? 'ride' : 'build';
+    $('#build-bar').classList.toggle('hidden', this.mode !== 'build');
+    $('#touch').classList.toggle('hidden', this.mode === 'build' || !this.touchUI);
+    $('#r-build').innerHTML = this.mode === 'build' ? '🛷 Кататься' : '🪏 Стройка';
+    this.persist();
+    this.restart(true);
+    if (this.mode === 'build') { this.cam.x = 1500; this.updateBuildBar(); if (!S.stats.builtHint) { S.stats.builtHint = 1; UI.toast('Зажми на экране, чтобы насыпать снег до этой высоты. Двигай камеру стрелками/колесом.'); } }
+  },
+  toggleNight() {
+    S.settings.night = !S.settings.night;
+    $('#r-night').innerHTML = S.settings.night ? '☀️ День' : '🌙 Ночь';
+    if (S.settings.night && !S.mods.headlight) UI.toast('Ночью без фары ничего не видно! Спаяй фару в гараже.');
+    Save.dirty();
+  },
+  toggleHead() {
+    if (!S.mods.headlight) { UI.toast('Фары нет — спаяй в гараже 🔦'); return; }
+    S.modOn.headlight = !S.modOn.headlight; Sfx.click(); Save.dirty();
+  },
+
+  // ---------- вход/выход
+  enter() {
+    this.active = true;
+    this.loadTerrain();
+    this.resize();
+    this.touchUI = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+    this.mode = 'ride';
+    $('#build-bar').classList.add('hidden');
+    $('#touch').classList.toggle('hidden', !this.touchUI);
+    $('#r-build').innerHTML = '🪏 Стройка';
+    $('#r-night').innerHTML = S.settings.night ? '☀️ День' : '🌙 Ночь';
+    $('#r-light').classList.toggle('hidden', !S.mods.headlight);
+    $$('#touch [data-need]').forEach(b => b.classList.toggle('hidden', !S.mods[b.dataset.need]));
+    this.restart(true);
+    this.last = performance.now();
+    cancelAnimationFrame(this.raf);
+    const loop = now => {
+      if (!this.active) return;
+      const dt = Math.min(0.05, (now - this.last) / 1000);
+      this.last = now;
+      this.update(dt);
+      this.render();
+      this.raf = requestAnimationFrame(loop);
+    };
+    this.raf = requestAnimationFrame(loop);
+    if (S.stats.runs === 0) setTimeout(() => this.showHelp(), 300);
+  },
+  exit() {
+    this.active = false;
+    cancelAnimationFrame(this.raf);
+    this.persist();
+    Sfx.setEngine(false);
+    Sfx.stopMusic();
+    Save.save();
+  },
+  showHelp() {
+    UI.modal('Как кататься 🛷', `
+      <table class="keys">
+      <tr><td><kbd>Пробел</kbd></td><td>оттолкнуться ногой</td></tr>
+      <tr><td><kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd></td><td>вращение в воздухе (сальто)</td></tr>
+      <tr><td><kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd></td><td>трюки: Супермен, Без рук, Канкан, Шпагат — <b>держи</b> в воздухе и отпусти до приземления!</td></tr>
+      <tr><td><kbd>↓</kbd> / <kbd>S</kbd></td><td>тормоз</td></tr>
+      <tr><td><kbd>↑</kbd> / <kbd>W</kbd></td><td>газ (когда соберёшь мотор)</td></tr>
+      <tr><td><kbd>Q</kbd> <kbd>E</kbd> <kbd>H</kbd> <kbd>L</kbd></td><td>поворотники, клаксон, фара</td></tr>
+      <tr><td><kbd>B</kbd> <kbd>N</kbd> <kbd>R</kbd></td><td>стройка, ночь, заново</td></tr>
+      </table>
+      <p>Приземляйся полозьями <b>вдоль склона</b>. Разные трюки в одном прыжке умножают очки. Очки → монеты → детали.</p>`, [{ label: 'Погнали!', cls: 'primary' }]);
+  },
+
+  restart(silent) {
+    const x = 70;
+    this.p = {
+      x, y: this.H(x), vx: 0, vy: 0, s: 0, ang: 0, angV: 0, ground: true, air: 0, rot: 0, takeX: x, takeY: 0,
+      trick: null, trickT: 0, tricks: {}, recover: 0, joints: Sled.makeJoints('sit'),
+      crashed: false, crashT: 0, rider: null, pushCD: 0, pushT: 0, stopT: 0, wheelRot: 0,
+      lastSig: -99, engine: false, maxX: x, seized: false, hornCD: 0, lowFuelWarn: false,
+    };
+    this.run = { started: false, score: 0, time: 0, jumps: 0, bestJump: 0, maxSpeed: 0, flips: 0, ended: false, wentFar: false, list: [] };
+    this.cam.x = x + 200; this.cam.y = this.p.y;
+    this.popups = []; this.parts = [];
+    Sfx.setEngine(false);
+    if (!silent) Sfx.click();
+  },
+
+  // ---------- игровой цикл
+  update(dt) {
+    this.t = (this.t || 0) + dt;
+    if (this.mode === 'build') {
+      const pan = (this.K.left || this.K.panL ? -1 : 0) + (this.K.right || this.K.panR ? 1 : 0);
+      this.cam.x = clamp(this.cam.x + pan * 700 * dt, 0, this.W);
+      this.cam.y = lerp(this.cam.y, this.H(this.cam.x) + 80, dt * 3);
+      this.applyBrush(dt);
+    } else if (!this.run.ended && !UI.modalOpen()) {
+      const n = 4;
+      for (let i = 0; i < n; i++) this.step(dt / n);
+      this.control(dt);
+      // камера
+      const p = this.p;
+      const tx = (p.crashed && p.rider ? p.rider.x : p.x) + clamp(p.vx || p.s, -400, 900) * 0.25;
+      const ty = (p.crashed && p.rider ? p.rider.y : p.y) + 40;
+      this.cam.x = lerp(this.cam.x, tx, 1 - Math.exp(-dt * 4));
+      this.cam.y = lerp(this.cam.y, ty, 1 - Math.exp(-dt * 3));
+    }
+    // частицы
+    for (const q of this.parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy -= (q.type === 'smoke' ? -20 : 500) * dt; q.life -= dt; }
+    this.parts = this.parts.filter(q => q.life > 0);
+    for (const pp of this.popups) pp.t += dt;
+    this.popups = this.popups.filter(pp => pp.t < 2.2);
+    this.keyEdge = {};
+  },
+
+  motorReady() { return S.mods.motor && !S.motor.seized && S.motor.health > 0 && S.tank.fuel > 0.5; },
+
+  control(dt) {
+    const p = this.p, K = this.K, E = this.keyEdge;
+    // клаксон
+    if (S.mods.horn && E.horn) { Sfx.hornTone(); }
+    // поворотники
+    if (S.mods.turn && (K.sigL || K.sigR)) p.lastSig = this.t;
+    // толчок
+    p.pushCD -= dt; p.pushT -= dt;
+    if (E.push && p.ground && !p.crashed && p.pushCD <= 0 && Math.abs(p.s) < 280) {
+      p.s += 120; p.pushCD = 0.4; p.pushT = 0.35;
+      this.run.started = true;
+      Sfx.noise(0.12, 0.15, 800);
+    }
+    // мотор
+    const gas = K.gas && this.motorReady() && !p.crashed;
+    if (S.mods.motor && K.gas && !this.motorReady() && !p.fuelMsgT) {
+      p.fuelMsgT = 1;
+      this.popup(S.motor.health <= 0 ? 'Мотор заклинило!' : 'Бак пуст! ⛽', '#ff5252');
+    }
+    if (p.fuelMsgT) { p.fuelMsgT -= dt; if (p.fuelMsgT <= 0) p.fuelMsgT = 0; }
+    if (gas) { p.engine = true; this.run.started = true; }
+    if (p.engine && this.motorReady()) {
+      const use = (gas ? 7 : 0.25) * dt;
+      const tot = S.tank.fuel + S.tank.oil;
+      const ratio = S.tank.oil > 0 ? S.tank.fuel / S.tank.oil : 999;
+      S.tank.fuel = Math.max(0, S.tank.fuel - use * S.tank.fuel / tot);
+      S.tank.oil = Math.max(0, S.tank.oil - use * S.tank.oil / tot);
+      if (gas && ratio > 70) {
+        S.motor.health -= dt * (ratio > 150 ? 8 : 1.5);
+        if (Math.random() < dt * 0.5) this.popup('Мотор греется! Мало масла', '#ffab40');
+        if (S.motor.health <= 0) { S.motor.health = 0; this.popup('💥 ЗАКЛИНИЛО! Нужна поршневая', '#ff1744'); Sfx.crash(); p.engine = false; }
+      }
+      if (gas && ratio < 30 && Math.random() < dt * 20) this.parts.push({ x: p.x - 70, y: p.y + 30, vx: rand(-40, 0), vy: rand(10, 40), life: 1.5, type: 'smoke', dark: true });
+      if (S.tank.fuel < 40 && !p.lowFuelWarn) { p.lowFuelWarn = true; this.popup('Топливо на исходе!', '#ffab40'); }
+      p.rpm = lerp(p.rpm || 0.15, gas ? (p.ground ? clamp(0.5 + Math.abs(p.s) / 1400, 0, 1) : 1) : 0.15, dt * 6);
+      Sfx.setEngine(true, p.rpm);
+      if (gas && Math.random() < dt * 25) this.parts.push({ x: p.x - 75 * Math.cos(p.ang), y: p.y + 26, vx: rand(-60, -20), vy: rand(10, 30), life: 0.8, type: 'smoke' });
+    } else if (p.engine) { p.engine = false; Sfx.setEngine(false); }
+    p.gas = gas;
+
+    // музыка
+    if (S.mods.speaker && S.modOn.speaker && this.run.started && !this.run.ended) Sfx.startMusic(); else Sfx.stopMusic();
+
+    // трюки в воздухе
+    if (!p.ground && !p.crashed) {
+      let held = null;
+      for (const k in TRICKS) if (K[k]) held = k;
+      if (held !== p.trick) {
+        if (p.trick && !held) p.recover = 0.16;
+        p.trick = held;
+        if (held) Sfx.trick();
+      }
+      if (p.trick) p.tricks[p.trick] = (p.tricks[p.trick] || 0) + dt;
+      if (p.recover > 0) p.recover -= dt;
+    }
+    // поза
+    let pose = 'sit';
+    if (p.trick) pose = TRICKS[p.trick].pose;
+    else if (p.pushT > 0) pose = 'push';
+    else if (K.brake && p.ground) pose = 'back';
+    else if (gas || (p.ground && p.s > 500)) pose = 'lean';
+    Sled.blendJoints(p.joints, pose, 1 - Math.exp(-dt * (p.trick ? 14 : 10)));
+
+    // скорость / рекорды
+    const speedKmh = Math.abs(p.ground ? p.s : Math.hypot(p.vx, p.vy)) / UNITS_PER_M * 3.6;
+    p.kmh = speedKmh;
+    if (!p.crashed) this.run.maxSpeed = Math.max(this.run.maxSpeed, speedKmh);
+    if (S.mods.speedo && speedKmh >= 50) App.ach('speed');
+    if (p.x > 1300) this.run.wentFar = true;
+    if (this.run.wentFar && S.mods.motor && p.x < 260 && p.ground) App.ach('climb');
+    p.maxX = Math.max(p.maxX, p.x);
+    if (p.x > 40) this.run.started = this.run.started || Math.abs(p.s) > 20;
+    if (this.run.started) this.run.time += dt;
+
+    // снежная пыль
+    if (p.ground && !p.crashed && Math.abs(p.s) > 150 && Math.random() < dt * 30) {
+      this.parts.push({ x: p.x - 40, y: p.y + 2, vx: -p.s * 0.2 + rand(-40, 40), vy: rand(40, 140), life: 0.6, type: 'snow' });
+    }
+    // конец заезда
+    if (p.crashed) {
+      p.crashT += dt;
+      if (p.crashT > 2.2) this.endRun(true);
+    } else if (this.run.started && p.ground && Math.abs(p.s) < 10 && !gas) {
+      p.stopT += dt;
+      if (p.stopT > (S.mods.motor ? 3 : 1.6)) this.endRun(false);
+    } else p.stopT = 0;
+  },
+
+  step(dt) {
+    const p = this.p;
+    if (p.crashed) {
+      const r = p.rider;
+      r.vy -= G * dt; r.x += r.vx * dt; r.y += r.vy * dt; r.a += r.va * dt;
+      const gh = this.H(r.x);
+      if (r.y < gh + 6) { r.y = gh + 6; r.vy = Math.abs(r.vy) * 0.3; r.vx *= 0.7; r.va *= 0.6; if (Math.abs(r.vy) > 60) Sfx.land(0.2); }
+      // снегокат скользит дальше сам
+      if (p.ground) {
+        const th = this.slope(p.x);
+        p.s += (-G * Math.sin(th)) * dt; p.s *= (1 - 1.5 * dt);
+        p.x = clamp(p.x + p.s * Math.cos(th) * dt, 5, this.W - 5); p.y = this.H(p.x); p.ang = lerp(p.ang, th, 0.2);
+      } else {
+        p.vy -= G * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.ang += p.angV * dt;
+        if (p.y <= this.H(p.x)) { p.ground = true; p.y = this.H(p.x); p.s = p.vx * 0.4; }
+      }
+      return;
+    }
+    if (p.ground) {
+      const dir = p.s >= 0 ? 1 : -1;
+      const th = this.pslope(p.x, dir);
+      const ice = this.isIce(p.x);
+      const mu = ice ? 0.01 : (S.tools.wax ? 0.025 : 0.045);
+      let a = -G * Math.sin(th);
+      if (p.gas) {
+        let thrust = 270 * (1 - clamp(p.s / 820, -0.2, 1));
+        const ratio = S.tank.oil > 0 ? S.tank.fuel / S.tank.oil : 999;
+        if (ratio < 30) thrust *= 0.75;
+        a += thrust * (ice ? 0.35 : 1);
+        p.wheelRot += dt * 40;
+      }
+      const fr = mu * G * Math.cos(th) + (this.K.brake ? 380 : 0) + 0.00008 * p.s * p.s;
+      if (Math.abs(p.s) < 4 && Math.abs(a) <= fr) p.s = 0;
+      else {
+        p.s += a * dt;
+        const sg = Math.sign(p.s);
+        p.s -= sg * fr * dt;
+        if (Math.sign(p.s) !== sg) p.s = 0;
+      }
+      const vx = p.s * Math.cos(th), vy = p.s * Math.sin(th);
+      let nx = p.x + vx * dt;
+      if (nx < 8) { nx = 8; p.s = Math.max(0, p.s); }
+      if (nx > this.W - 8) { nx = this.W - 8; p.s = Math.min(0, p.s); }
+      const by = p.y + vy * dt - 0.5 * G * dt * dt;
+      const gh = this.H(nx);
+      if (gh < by - 1.2 && Math.abs(p.s) > 60) {
+        p.ground = false; p.x = nx; p.y = by; p.vx = vx; p.vy = vy - G * dt;
+        p.ang = Math.atan2(vy, vx) + (dir < 0 ? Math.PI : 0); p.ang = wrapAngle(p.ang);
+        p.air = 0; p.rot = 0; p.takeX = nx; p.takeY = by; p.tricks = {}; p.trick = null; p.recover = 0; p.angV = 0; p.peak = by;
+        p.sigBonus = this.t - p.lastSig < 2.5;
+      } else {
+        p.x = nx; p.y = gh;
+        const th2 = this.pslope(nx, dir);
+        p.s = vx * Math.cos(th2) + vy * Math.sin(th2);
+      }
+      const sa = Math.atan2(this.H(p.x + 30) - this.H(p.x - 30), 60);
+      p.ang = lerp(p.ang, sa, 0.35);
+    } else {
+      p.air += dt;
+      p.vy -= G * dt;
+      p.vx *= (1 - 0.02 * dt);
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.peak = Math.max(p.peak, p.y);
+      if (p.x < 8) { p.x = 8; p.vx = Math.abs(p.vx) * 0.3; }
+      if (p.x > this.W - 8) { p.x = this.W - 8; p.vx = -Math.abs(p.vx) * 0.3; }
+      const input = (this.K.left ? 1 : 0) - (this.K.right ? 1 : 0);
+      const rs = S.tools.grips ? 8.0 : 6.4;
+      p.angV = lerp(p.angV, input * rs, 1 - Math.exp(-dt * (input ? 9 : 2.5)));
+      p.ang += p.angV * dt; p.rot += p.angV * dt;
+      // без вращения снегокат плавно ложится по траектории — так проще приземляться
+      if (!input && Math.abs(p.angV) < 1.5) {
+        const va = Math.atan2(p.vy, p.vx) + (p.vx < 0 ? Math.PI : 0);
+        const dd = wrapAngle(va - p.ang);
+        if (Math.abs(dd) < 1.2) p.ang += clamp(dd, -1, 1) * (1 - Math.exp(-dt * 1.6));
+      }
+      if (p.gas) p.wheelRot += dt * 60;
+      if (p.y <= this.H(p.x)) this.land();
+    }
+  },
+
+  land() {
+    const p = this.p;
+    const th = this.slope(p.x);
+    const diff = wrapAngle(p.ang - th);
+    const vn = -p.vx * Math.sin(th) + p.vy * Math.cos(th);
+    const impact = -vn;
+    p.y = this.H(p.x);
+    p.ground = true;
+    p.s = p.vx * Math.cos(th) + p.vy * Math.sin(th);
+    if (p.air < 0.3 && Math.abs(diff) < 1.2) { p.ang = th; return; }
+    const tol = 0.62 + (S.tools.seat ? 0.22 : 0);
+    const maxImpact = S.tools.seat ? 1400 : 1050;
+    let reason = null;
+    if (Math.abs(diff) > tol) reason = Math.abs(diff) > 2.2 ? 'Приземлился на голову!' : 'Кривое приземление';
+    else if (p.trick || p.recover > 0) reason = 'Не успел сесть обратно!';
+    else if (impact > maxImpact) reason = 'Слишком жёстко!';
+    if (reason) { this.crash(reason); return; }
+    p.ang = th;
+    Sfx.land(clamp(impact / 1000, 0, 1));
+    for (let i = 0; i < 14; i++) this.parts.push({ x: p.x + rand(-40, 30), y: p.y + 2, vx: rand(-120, 120) + p.s * 0.2, vy: rand(60, 220), life: 0.8, type: 'snow' });
+    this.scoreJump(Math.abs(diff));
+  },
+
+  scoreJump(diff) {
+    const p = this.p;
+    const items = [];
+    let pts = 0, kinds = 0;
+    const flips = Math.floor((Math.abs(p.rot) + 0.75) / TAU);
+    if (flips > 0) {
+      const pre = ['', '', 'Двойной ', 'Тройной ', 'Четверной ', 'Безумный '][Math.min(flips, 5)];
+      const name = pre + (p.rot > 0 ? 'бэкфлип' : 'фронтфлип');
+      const v = 500 * flips * (flips + 1) / 2;
+      items.push([name, v]); pts += v; kinds++;
+      this.run.flips += flips; S.stats.flips += flips;
+      App.ach('first_flip');
+      if (flips >= 2) App.ach('double');
+      if (flips >= 3) App.ach('triple');
+    }
+    for (const k in p.tricks) {
+      const t = p.tricks[k];
+      if (t < 0.25) continue;
+      const v = Math.round(100 + TRICKS[k].rate * t);
+      items.push([`${TRICKS[k].name} ${t.toFixed(1)}с`, v]); pts += v; kinds++;
+    }
+    if (p.air > 0.7) { const v = Math.round(p.air * 120); items.push([`Полёт ${p.air.toFixed(1)} с`, v]); pts += v; }
+    const d = Math.abs(p.x - p.takeX);
+    if (d > 200) { const v = Math.round((d - 200) * 0.8); items.push([`Дальность ${(d / UNITS_PER_M).toFixed(1)} м`, v]); pts += v; }
+    if (p.sigBonus && S.mods.turn) { items.push(['Показал поворотник 😇', 100]); pts += 100; App.ach('signal'); }
+    if (diff < 0.12 && pts > 0) { const v = Math.round(pts * 0.15); items.push(['Чистое приземление', v]); pts += v; }
+    const mult = Math.max(1, kinds);
+    const total = Math.round(pts * mult);
+    if (p.air >= 2) App.ach('big_air');
+    if (d / UNITS_PER_M >= 20) App.ach('long_jump');
+    if (kinds >= 3) App.ach('combo3');
+    S.stats.bestAir = Math.max(S.stats.bestAir, p.air);
+    S.stats.bestDist = Math.max(S.stats.bestDist, d / UNITS_PER_M);
+    if (total > 0) {
+      this.run.score += total; this.run.jumps++;
+      this.run.bestJump = Math.max(this.run.bestJump, total);
+      this.run.list.push(...items.map(i => i[0]));
+      items.forEach((it, i) => setTimeout(() => this.popup(`${it[0]} +${it[1]}`, '#fff'), i * 140));
+      setTimeout(() => this.popup(mult > 1 ? `КОМБО ×${mult} = ${total}` : `+${total}`, mult > 1 ? '#ffd740' : '#69f0ae', true), items.length * 140);
+      Sfx.coin();
+    }
+  },
+
+  crash(reason) {
+    const p = this.p;
+    p.crashed = true; p.crashT = 0; p.trick = null;
+    p.rider = { x: p.x, y: p.y + 30, vx: p.vx * 0.8, vy: Math.abs(p.vy) * 0.3 + 150, a: p.ang, va: rand(-8, 8) };
+    p.s = p.vx * 0.3; p.angV = rand(-4, 4);
+    S.stats.crashes++;
+    if (S.stats.crashes >= 10) App.ach('crash10');
+    Sfx.crash();
+    for (let i = 0; i < 30; i++) this.parts.push({ x: p.x + rand(-30, 30), y: p.y + 5, vx: rand(-200, 200), vy: rand(100, 300), life: 1, type: 'snow' });
+    this.popup('💥 ' + reason, '#ff5252', true);
+  },
+
+  popup(text, color, big) { this.popups.push({ text, color, big, t: 0, off: this.popups.filter(p => p.t < 0.3).length }); },
+
+  endRun(crashed) {
+    if (this.run.ended) return;
+    this.run.ended = true;
+    Sfx.setEngine(false); Sfx.stopMusic();
+    const r = this.run, p = this.p;
+    const distM = Math.max(0, (p.maxX - 1100) / UNITS_PER_M);
+    let coins = r.score / 12 + distM * 0.3;
+    const mults = [];
+    const night = S.settings.night && S.mods.headlight && S.modOn.headlight;
+    if (night) { coins *= 1.5; mults.push('🌙 ночь ×1.5'); App.ach('night'); }
+    if (S.mods.underglow && S.modOn.underglow) { coins *= 1.1; mults.push('🌈 подсветка ×1.1'); }
+    if (S.mods.speaker && S.modOn.speaker) { coins *= 1.1; mults.push('🎵 музыка ×1.1'); }
+    coins = Math.max(r.started ? 1 : 0, Math.round(coins));
+    S.stats.runs++;
+    S.stats.best = Math.max(S.stats.best, r.score);
+    if (S.mods.speedo) S.stats.maxSpeed = Math.max(S.stats.maxSpeed, r.maxSpeed);
+    App.ach('first_ride');
+    App.addCoins(coins);
+    Save.save();
+    const best = r.score >= S.stats.best && r.score > 0;
+    UI.modal(crashed ? 'Упал! 🤕' : 'Заезд окончен 🏁', `
+      <div class="summary">
+        <div class="big-num">${fmt(r.score)}<small> очков${best ? ' — рекорд! 🏆' : ''}</small></div>
+        <div>Прыжков с трюками: <b>${r.jumps}</b> · Сальто: <b>${r.flips}</b></div>
+        <div>Дальше всего: <b>${distM.toFixed(0)} м</b>${S.mods.speedo ? ` · Макс. скорость: <b>${r.maxSpeed.toFixed(0)} км/ч</b>` : ''}</div>
+        ${mults.length ? `<div class="small">${mults.join(' · ')}</div>` : ''}
+        <div class="coins-earned">+${coins} 🪙</div>
+      </div>`, [
+      { label: '↺ Ещё раз', cls: 'primary', onClick: () => this.restart() },
+      { label: '🪏 Стройка', onClick: () => { this.restart(true); this.toggleBuild(); } },
+      { label: '🏠 Гараж', onClick: () => App.go('garage') },
+    ]);
+  },
+
+  // ---------- отрисовка
+  w2s(x, y) { return [(x - this.cam.x) * this.cam.z + this.vw * 0.35, this.vh * 0.62 - (y - this.cam.y) * this.cam.z]; },
+
+  render() {
+    const ctx = this.ctx, W = this.vw, H = this.vh, z = this.cam.z, d = this.dpr;
+    const night = S.settings.night;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    this.drawBackground(ctx, W, H, night);
+
+    // мир (ось Y вверх)
+    ctx.setTransform(d * z, 0, 0, -d * z, d * (W * 0.35 - this.cam.x * z), d * (H * 0.62 + this.cam.y * z));
+    const x0 = this.cam.x - (W * 0.35) / z - 50, x1 = this.cam.x + (W * 0.65) / z + 50;
+    const yBottom = this.cam.y - (H * 0.4) / z - 50;
+    this.drawDecor(ctx, x0, x1, night);
+    this.drawTerrain(ctx, x0, x1, yBottom);
+    this.drawSledWorld(ctx);
+    // частицы
+    for (const q of this.parts) {
+      if (q.type === 'snow') { ctx.fillStyle = `rgba(255,255,255,${q.life})`; ctx.fillRect(q.x, q.y, 4, 4); }
+      else { ctx.fillStyle = q.dark ? `rgba(60,60,70,${q.life * 0.35})` : `rgba(220,220,230,${q.life * 0.35})`; ctx.beginPath(); ctx.arc(q.x, q.y, 6 + (1.5 - q.life) * 8, 0, TAU); ctx.fill(); }
+    }
+    if (this.mode === 'build') this.drawBuild(ctx, x0, x1);
+
+    // ночь
+    if (night) this.drawNight(ctx, W, H);
+
+    // снегопад
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    for (const f of this.flakes) {
+      f.y += f.v / H * 0.016; f.x += (Math.sin(this.t + f.s * 10) * 10 - (this.p.s || 0) * 0.02) / W * 0.016;
+      if (f.y > 1) { f.y = 0; f.x = Math.random(); }
+      f.x = (f.x + 1) % 1;
+      ctx.fillRect(f.x * W, f.y * H, f.s, f.s);
+    }
+    this.drawHUD(ctx, W, H);
+  },
+
+  bgHill(x, a, b) { return Math.sin(x * a) * 0.5 + Math.sin(x * b + 1.3) * 0.3 + Math.sin(x * a * 2.7 + 4) * 0.2; },
+
+  drawBackground(ctx, W, H, night) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    if (night) { g.addColorStop(0, '#030616'); g.addColorStop(1, '#1b2550'); }
+    else { g.addColorStop(0, '#6fb1ff'); g.addColorStop(0.7, '#cfe6ff'); g.addColorStop(1, '#eef6ff'); }
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if (night) {
+      for (const s of this.stars) { ctx.fillStyle = `rgba(255,255,255,${0.5 + 0.5 * Math.sin(this.t * 2 + s.p)})`; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+      ctx.fillStyle = '#fffde7'; ctx.beginPath(); ctx.arc(W * 0.8, H * 0.15, 28, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#030616'; ctx.beginPath(); ctx.arc(W * 0.8 + 12, H * 0.15 - 6, 24, 0, TAU); ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(255,250,220,0.9)'; ctx.beginPath(); ctx.arc(W * 0.82, H * 0.14, 34, 0, TAU); ctx.fill();
+    }
+    const horizon = H * 0.62 + this.cam.y * this.cam.z * 0.1;
+    // дальние горы
+    ctx.fillStyle = night ? '#18204a' : '#b3c7e6';
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, horizon - 120 - this.bgHill((x + this.cam.x * 0.05) * 0.004, 1, 2.3) * 80);
+    ctx.lineTo(W, H); ctx.fill();
+    // ёлки и дома
+    ctx.fillStyle = night ? '#121a38' : '#93aed6';
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, horizon - 50 - this.bgHill((x + this.cam.x * 0.15) * 0.006, 1, 1.7) * 30);
+    ctx.lineTo(W, H); ctx.fill();
+    // панельки
+    const off = this.cam.x * 0.25;
+    for (let i = Math.floor(off / 260) - 1; i < Math.floor((off + W) / 260) + 1; i++) {
+      const bx = i * 260 - off, bh = 90 + ((i * 37) % 5) * 18, bw = 110;
+      if ((i * 7) % 3 === 0) continue;
+      ctx.fillStyle = night ? '#0f1530' : '#a9bcd9';
+      ctx.fillRect(bx, horizon - 40 - bh, bw, bh + 40);
+      for (let wy = 0; wy < bh / 18 - 1; wy++) for (let wx = 0; wx < 6; wx++) {
+        const lit = ((i * 13 + wx * 7 + wy * 3) % 5) < 2;
+        ctx.fillStyle = night ? (lit ? '#ffd54f' : '#1a2348') : '#8ea6c9';
+        ctx.fillRect(bx + 8 + wx * 17, horizon - 30 - bh + wy * 18, 9, 10);
+      }
+    }
+    // ближние ёлки
+    const off2 = this.cam.x * 0.4;
+    ctx.fillStyle = night ? '#0b1a1a' : '#5d8a7a';
+    for (let i = Math.floor(off2 / 90) - 1; i < Math.floor((off2 + W) / 90) + 1; i++) {
+      if ((i * 11) % 4 === 0) continue;
+      const tx = i * 90 - off2 + ((i * 29) % 40), th = 50 + ((i * 17) % 4) * 15, ty = horizon - 10;
+      ctx.beginPath(); ctx.moveTo(tx, ty - th); ctx.lineTo(tx + th * 0.35, ty); ctx.lineTo(tx - th * 0.35, ty); ctx.fill();
+    }
+  },
+
+  drawTree(ctx, x, s) {
+    const y = this.H(x) - 2;
+    ctx.fillStyle = '#4e342e'; ctx.fillRect(x - 4 * s, y, 8 * s, 18 * s);
+    for (let i = 0; i < 3; i++) {
+      const by = y + 14 * s + i * 22 * s, w = (34 - i * 8) * s;
+      ctx.fillStyle = '#1b5e20';
+      ctx.beginPath(); ctx.moveTo(x - w, by); ctx.lineTo(x + w, by); ctx.lineTo(x, by + 34 * s); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.moveTo(x - w * 0.6, by + 10 * s); ctx.lineTo(x + w * 0.5, by + 12 * s); ctx.lineTo(x, by + 34 * s); ctx.fill();
+    }
+  },
+
+  drawDecor(ctx, x0, x1, night) {
+    // ёлки на стартовой горе
+    [[20, 1.2], [300, 1], [520, 1.3], [780, 0.9], [980, 1.1]].forEach(([x, s]) => { if (x > x0 - 100 && x < x1 + 100) this.drawTree(ctx, x, s); });
+    // флаг старт
+    if (x0 < 200) {
+      const y = this.H(150);
+      ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(150, y); ctx.lineTo(150, y + 110); ctx.stroke();
+      ctx.fillStyle = '#e53935'; ctx.beginPath(); ctx.moveTo(150, y + 110); ctx.lineTo(205, y + 98); ctx.lineTo(150, y + 84); ctx.fill();
+    }
+    // снеговик
+    if (x0 < 1300 && x1 > 1150) {
+      const x = 1240, y = this.H(x);
+      ctx.fillStyle = '#fff';
+      [[0, 18, 20], [0, 48, 14], [0, 70, 10]].forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(x + dx, y + dy, r, 0, TAU); ctx.fill(); });
+      ctx.fillStyle = '#ff6d00'; ctx.beginPath(); ctx.moveTo(x + 8, y + 72); ctx.lineTo(x + 22, y + 69); ctx.lineTo(x + 8, y + 67); ctx.fill();
+      ctx.fillStyle = '#111'; ctx.fillRect(x - 8, y + 80, 16, 10); ctx.fillRect(x - 11, y + 79, 22, 3);
+    }
+    // забор в конце
+    if (x1 > 5700) {
+      for (let x = 5760; x < 6000; x += 24) {
+        const y = this.H(x);
+        ctx.fillStyle = '#6d4c41'; ctx.fillRect(x, y - 5, 12, 70);
+        ctx.fillStyle = '#fff'; ctx.fillRect(x - 1, y + 64, 14, 6);
+      }
+    }
+    // метки расстояния
+    ctx.save();
+    for (let m = 30; m * UNITS_PER_M < this.END_EDIT; m += 10) {
+      const wx = m * UNITS_PER_M;
+      if (wx < x0 || wx > x1) continue;
+      const y = this.H(wx);
+      ctx.strokeStyle = night ? '#90a4ae' : '#546e7a'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(wx, y); ctx.lineTo(wx, y + 40); ctx.stroke();
+      ctx.fillStyle = m % 50 === 0 ? '#e53935' : '#ff7043'; ctx.fillRect(wx, y + 30, 18, 10);
+    }
+    ctx.restore();
+  },
+
+  drawTerrain(ctx, x0, x1, yBottom) {
+    const night = S.settings.night;
+    const step = this.STEP;
+    const a = Math.max(0, Math.floor(x0 / step)), b = Math.min(this.N - 1, Math.ceil(x1 / step));
+    const g = ctx.createLinearGradient(0, this.cam.y + 200, 0, yBottom);
+    g.addColorStop(0, night ? '#c5d3f0' : '#ffffff'); g.addColorStop(1, night ? '#7d8fc0' : '#cddcf0');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(a * step, yBottom - 1000);
+    for (let i = a; i <= b; i++) ctx.lineTo(i * step, this.h[i]);
+    ctx.lineTo(b * step, yBottom - 1000);
+    ctx.closePath(); ctx.fill();
+    // кромка
+    ctx.strokeStyle = night ? '#9fb3e0' : '#b3cde8'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = a; i <= b; i++) ctx.lineTo(i * step, this.h[i] - 4);
+    ctx.stroke();
+    // лёд
+    ctx.strokeStyle = '#4fc3f7'; ctx.lineWidth = 5;
+    ctx.beginPath();
+    let open = false;
+    for (let i = a; i <= b; i++) {
+      if (this.ice[i]) { if (!open) { ctx.moveTo(i * step, this.h[i] + 1); open = true; } else ctx.lineTo(i * step, this.h[i] + 1); }
+      else open = false;
+    }
+    ctx.stroke();
+  },
+
+  sledLights() {
+    const p = this.p, K = this.K;
+    return {
+      head: S.mods.headlight && S.modOn.headlight,
+      glow: S.mods.underglow && S.modOn.underglow,
+      brake: S.mods.stoplight && !!K.brake,
+      left: S.mods.turn && !!K.sigL,
+      right: S.mods.turn && !!K.sigR,
+    };
+  },
+
+  drawSledWorld(ctx) {
+    const p = this.p;
+    const opts = {
+      t: this.t, joints: p.joints, mods: S.mods, paint: S.paint, glow: S.glow,
+      lights: this.sledLights(), wheelRot: p.wheelRot, throttle: p.gas, engineOn: p.engine,
+      noRider: p.crashed, music: Sfx.musicTimer, alarmBlink: false,
+    };
+    if (this.mode === 'ride' && p.ground && !p.crashed) p.wheelRot += (p.s / 12) * (1 / 60) * (p.gas ? 1.5 : 1) * (S.mods.motor ? 1 : 0);
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.ang);
+    Sled.draw(ctx, opts);
+    ctx.restore();
+    if (p.crashed && p.rider) {
+      const r = p.rider;
+      ctx.save(); ctx.translate(r.x, r.y); ctx.rotate(r.a);
+      Sled.drawRider(ctx, Sled.makeJoints('sprawl'), true);
+      ctx.restore();
+    }
+  },
+
+  drawBuild(ctx, x0, x1) {
+    // запретные зоны
+    ctx.fillStyle = 'rgba(255,0,0,0.08)';
+    if (x0 < this.START_EDIT) ctx.fillRect(x0, -200, this.START_EDIT - x0, 1200);
+    if (x1 > this.END_EDIT) ctx.fillRect(this.END_EDIT, -200, x1 - this.END_EDIT, 1200);
+    // сетка высот
+    ctx.strokeStyle = 'rgba(0,60,120,0.12)'; ctx.lineWidth = 1;
+    for (let y = 0; y <= 650; y += 50) { ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); }
+    const b = this.brush;
+    if (!b.hover && !b.on) return;
+    const R = S.tools.shovel2 ? 90 : 60;
+    if (['kicker', 'bigkicker', 'landing'].includes(this.tool)) {
+      const s = { kicker: [65, 140], bigkicker: [105, 220], landing: [85, 340] }[this.tool];
+      ctx.strokeStyle = 'rgba(255,111,0,0.9)'; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      if (this.tool === 'landing') {
+        for (let x = b.wx - 110; x < b.wx; x += 10) ctx.lineTo(x, this.H(x) + s[0] * (0.5 - 0.5 * Math.cos(Math.PI * (x - b.wx + 110) / 110)));
+        for (let x = b.wx; x <= b.wx + s[1]; x += 10) ctx.lineTo(x, this.H(x) + s[0] * (0.5 + 0.5 * Math.cos(Math.PI * (x - b.wx) / s[1])));
+      } else {
+        for (let x = b.wx - s[1]; x <= b.wx; x += 10) ctx.lineTo(x, this.H(x) + s[0] * Math.pow((x - b.wx + s[1]) / s[1], 2));
+        ctx.lineTo(b.wx + 30, this.H(b.wx + 30));
+      }
+      ctx.stroke(); ctx.setLineDash([]);
+    } else {
+      ctx.strokeStyle = this.tool === 'dig' ? 'rgba(121,85,72,0.9)' : this.tool === 'ice' ? 'rgba(3,169,244,0.9)' : 'rgba(30,136,229,0.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(b.wx, b.wy, R, R * 0.4, 0, 0, TAU); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(b.wx, this.H(b.wx)); ctx.lineTo(b.wx, b.wy); ctx.stroke();
+      // лопата
+      ctx.save(); ctx.translate(b.wx + 10, b.wy + 10); ctx.rotate(0.5);
+      ctx.fillStyle = '#8d6e63'; ctx.fillRect(-2, 0, 4, 60);
+      ctx.fillStyle = '#90a4ae'; roundRect(ctx, -10, -18, 20, 22, 4); ctx.fill();
+      ctx.restore();
+    }
+  },
+
+  drawNight(ctx, W, H) {
+    const d = this.dpr, z = this.cam.z, p = this.p;
+    const dc = this.dctx;
+    dc.setTransform(1, 0, 0, 1, 0, 0);
+    dc.globalCompositeOperation = 'source-over';
+    dc.clearRect(0, 0, this.dark.width, this.dark.height);
+    dc.fillStyle = 'rgba(2,4,16,0.9)';
+    dc.fillRect(0, 0, this.dark.width, this.dark.height);
+    dc.globalCompositeOperation = 'destination-out';
+    dc.setTransform(d, 0, 0, d, 0, 0);
+    // лунный свет вокруг
+    const [px, py] = this.w2s(p.x, p.y + 40);
+    let g = dc.createRadialGradient(px, py, 0, px, py, 140 * z);
+    g.addColorStop(0, 'rgba(0,0,0,0.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    dc.fillStyle = g; dc.beginPath(); dc.arc(px, py, 140 * z, 0, TAU); dc.fill();
+    const L = this.sledLights();
+    if (L.head && !p.crashed) {
+      const c = Math.cos(p.ang), s = Math.sin(p.ang);
+      const lx = p.x + 25 * c - 44 * s, ly = p.y + 25 * s + 44 * c;
+      const [sx, sy] = this.w2s(lx, ly);
+      const ang = -p.ang + 0.12, len = 620 * z;
+      g = dc.createRadialGradient(sx, sy, 0, sx, sy, len);
+      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.6, 'rgba(0,0,0,0.85)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      dc.fillStyle = g;
+      dc.beginPath(); dc.moveTo(sx, sy); dc.arc(sx, sy, len, ang - 0.36, ang + 0.36); dc.closePath(); dc.fill();
+    }
+    // окна домов и фонари — просто подсветим подсветку днища
+    if (L.glow) {
+      const [gx, gy] = this.w2s(p.x - 10 * Math.cos(p.ang), p.y);
+      g = dc.createRadialGradient(gx, gy, 0, gx, gy, 110 * z);
+      g.addColorStop(0, 'rgba(0,0,0,0.8)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      dc.fillStyle = g; dc.beginPath(); dc.arc(gx, gy, 110 * z, 0, TAU); dc.fill();
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(this.dark, 0, 0);
+    // цветной отсвет
+    if (L.glow) {
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+      const [gx, gy] = this.w2s(p.x, p.y);
+      ctx.globalCompositeOperation = 'lighter';
+      const gg = ctx.createRadialGradient(gx, gy, 0, gx, gy, 120 * z);
+      gg.addColorStop(0, hexA(S.glow, 0.35)); gg.addColorStop(1, hexA(S.glow, 0));
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(gx, gy, 120 * z, 0, TAU); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  },
+
+  drawHUD(ctx, W, H) {
+    const p = this.p;
+    ctx.textBaseline = 'alphabetic';
+    if (this.mode === 'build') {
+      ctx.fillStyle = 'rgba(0,0,0,0.45)'; roundRect(ctx, 10, 58, 250, 34, 10); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(`Высота: ${Math.max(0, Math.round(this.brush.wy / UNITS_PER_M * 10) / 10)} м  ·  X: ${Math.round(this.brush.wx / UNITS_PER_M)} м`, 20, 80);
+      return;
+    }
+    // очки
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; roundRect(ctx, 10, 58, 190, 54, 10); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
+    ctx.font = 'bold 22px sans-serif'; ctx.fillText(fmt(this.run.score), 22, 86);
+    ctx.font = '12px sans-serif'; ctx.fillStyle = '#cfd8dc'; ctx.fillText(`очков · рекорд ${fmt(S.stats.best)}`, 22, 103);
+    // текущий прыжок
+    if (!p.ground && !p.crashed && p.air > 0.3) {
+      const parts = [];
+      const fl = Math.abs(p.rot) / TAU;
+      if (fl > 0.5) parts.push(`🔄 ${fl.toFixed(1)}`);
+      for (const k in p.tricks) if (p.tricks[k] > 0.1) parts.push(`${TRICKS[k].name} ${p.tricks[k].toFixed(1)}`);
+      ctx.textAlign = 'center'; ctx.font = 'bold 20px sans-serif';
+      ctx.fillStyle = '#ffd740'; ctx.fillText(parts.join('  +  ') || `В воздухе ${p.air.toFixed(1)} с`, W / 2, 90);
+    }
+    // справа: спидометр, бак
+    let ry = 58;
+    ctx.textAlign = 'right';
+    if (S.mods.speedo) {
+      ctx.fillStyle = 'rgba(0,0,0,0.75)'; roundRect(ctx, W - 140, ry, 130, 44, 8); ctx.fill();
+      ctx.fillStyle = '#29b6f6'; ctx.font = 'bold 24px monospace'; ctx.fillText(`${Math.round(p.kmh || 0)}`, W - 62, ry + 32);
+      ctx.font = '12px monospace'; ctx.fillText('км/ч', W - 20, ry + 32);
+      ry += 52;
+    }
+    if (S.mods.motor) {
+      const cap = S.tools.bigtank ? 1200 : 500;
+      const f = (S.tank.fuel + S.tank.oil) / cap;
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'; roundRect(ctx, W - 140, ry, 130, 40, 8); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(`⛽ ${Math.round(S.tank.fuel + S.tank.oil)} мл`, W - 132, ry + 15);
+      ctx.fillStyle = '#424242'; ctx.fillRect(W - 132, ry + 22, 114, 8);
+      ctx.fillStyle = f < 0.15 ? '#ff5252' : '#ffab00'; ctx.fillRect(W - 132, ry + 22, 114 * clamp(f, 0, 1), 8);
+      ctx.textAlign = 'right'; ctx.fillStyle = S.motor.health < 40 ? '#ff5252' : '#b2ff59';
+      ctx.fillText(`мотор ${Math.round(S.motor.health)}%`, W - 18, ry + 15);
+      ry += 48;
+    }
+    // всплывашки
+    ctx.textAlign = 'center';
+    this.popups.forEach((pp, i) => {
+      const a = clamp(2.2 - pp.t, 0, 1);
+      const y = H * 0.32 - pp.t * 30 + (i % 6) * 26;
+      ctx.font = `bold ${pp.big ? 28 : 18}px sans-serif`;
+      ctx.lineWidth = 4; ctx.strokeStyle = `rgba(0,0,0,${a * 0.6})`; ctx.strokeText(pp.text, W / 2, y);
+      ctx.fillStyle = pp.color; ctx.globalAlpha = a; ctx.fillText(pp.text, W / 2, y); ctx.globalAlpha = 1;
+    });
+    // подсказка на старте
+    if (!this.run.started && this.mode === 'ride') {
+      ctx.font = 'bold 18px sans-serif'; ctx.fillStyle = `rgba(255,255,255,${0.6 + 0.4 * Math.sin(this.t * 4)})`;
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 4;
+      const msg = this.touchUI ? 'Жми «Толчок», чтобы поехать!' : 'Жми ПРОБЕЛ, чтобы оттолкнуться!';
+      ctx.strokeText(msg, W / 2, H * 0.22); ctx.fillText(msg, W / 2, H * 0.22);
+    }
+  },
+};
+
+</script>
+<script>
+'use strict';
+// ===== Гараж: тюнинг, электроника, мотор, магазин, достижения =====
+const Garage = {
+  tab: 'sled', shopCat: 'radio', raf: 0,
+
+  init() {
+    $$('#g-tabs [data-tab]').forEach(b => b.onclick = () => { Sfx.click(); this.tab = b.dataset.tab; this.render(); });
+    $('#btn-go').onclick = () => { Sfx.click(); App.go('ride'); };
+    // делегирование кликов
+    $('#g-body').addEventListener('click', e => {
+      const el = e.target.closest('[data-act]');
+      if (!el || el.disabled) return;
+      Sfx.click();
+      this.act(el.dataset.act, el.dataset.id, el);
+    });
+  },
+
+  enter(fromRide) {
+    this.render();
+    if (fromRide) this.theftCheck();
+  },
+
+  updateCoins() { const c = $('#g-coins'); if (c) c.textContent = fmt(S.coins); },
+
+  theftCheck() {
+    if (S.stats.runs < 3 || Math.random() > 0.12 || S.coins < 150) return;
+    setTimeout(() => {
+      if (S.mods.alarm) {
+        Sfx.alarm(2);
+        App.ach('thief');
+        UI.modal('🚨 УИУИУИ!', 'Пока ты катался, какой-то тип полез к снегокату. <b>Сигналка заорала</b> — он сбежал, роняя шапку.<br>Сосед дал тебе <b>40 🪙</b> за бдительность.', [{ label: 'Ха!', onClick: () => App.addCoins(40) }]);
+      } else {
+        const lost = Math.min(250, Math.round(S.coins * 0.15));
+        S.coins -= lost; Save.save(); this.updateCoins();
+        UI.modal('😱 Обокрали!', `Пока ты катался, кто-то залез в гараж и стащил <b>${lost} 🪙</b> из банки на полке.<br><small>Спаяй сигнализацию — и такого не будет.</small>`, [{ label: 'Эх…' }]);
+      }
+    }, 400);
+  },
+
+  render() {
+    this.updateCoins();
+    $$('#g-tabs [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === this.tab));
+    const body = $('#g-body');
+    cancelAnimationFrame(this.raf);
+    const fn = { sled: 'renderSled', electro: 'renderElectro', motor: 'renderMotor', shop: 'renderShop', ach: 'renderAch', settings: 'renderSettings' }[this.tab];
+    body.innerHTML = this[fn]();
+    if (this.tab === 'sled') this.startPreview();
+    if (this.tab === 'sled' && (S.mods.motor || S.motor.stage >= 7)) this.bindFuel();
+  },
+
+  invCount(id) {
+    const it = ITEMS[id];
+    if (it.tool) return S.tools[id] ? 'есть' : '';
+    const n = S.inv[id] || 0;
+    return n ? `${fmt(n)}${it.unit ? ' ' + it.unit : ' шт'}` : '';
+  },
+
+  // ---------- вкладка «Снегокат»
+  renderSled() {
+    const installed = PROJECTS.filter(p => S.mods[p.id]);
+    const toggles = installed.filter(p => ['headlight', 'underglow', 'speaker'].includes(p.id)).map(p =>
+      `<button class="chip ${S.modOn[p.id] ? 'on' : ''}" data-act="toggle" data-id="${p.id}">${p.icon} ${p.name}: ${S.modOn[p.id] ? 'вкл' : 'выкл'}</button>`).join('');
+    const upgrades = Object.keys(ITEMS).filter(k => ITEMS[k].cat === 'upgrade' && ITEMS[k].tool && S.tools[k]).map(k => `<span class="tag">${ITEMS[k].icon} ${ITEMS[k].name}</span>`).join('');
+    let fuel = '';
+    if (S.mods.motor || S.motor.stage >= 7) {
+      const cap = S.tools.bigtank ? 1200 : 500;
+      const tot = S.tank.fuel + S.tank.oil;
+      const ratio = S.tank.oil > 0 ? Math.round(S.tank.fuel / S.tank.oil) : null;
+      fuel = `<div class="card">
+        <h3>⛽ Заправка</h3>
+        <div class="row"><span>В баке: <b>${Math.round(tot)} / ${cap} мл</b> ${tot > 0 ? `· смесь ${ratio ? '1:' + ratio : 'БЕЗ МАСЛА ⚠️'}` : ''}</span></div>
+        <div class="bar"><i style="width:${Math.min(100, tot / cap * 100)}%"></i></div>
+        <div class="row small">В канистре: бензин <b>${fmt(S.inv.petrol || 0)} мл</b> · масло 2Т <b>${fmt(S.inv.oil || 0)} мл</b></div>
+        <div class="mix">
+          <label>Бензин, мл <input type="number" id="mixP" min="0" step="50" value="${Math.min(S.inv.petrol || 0, Math.max(0, Math.round((cap - tot) / 50) * 50))}"></label>
+          <label>Масло, мл <input type="number" id="mixO" min="0" step="1" value="0"></label>
+          <div id="mixRatio" class="small"></div>
+        </div>
+        <div class="row">
+          <button class="btn primary" data-act="fill">Смешать и залить</button>
+          <button class="btn" data-act="drain">Слить бак</button>
+          <button class="btn" data-act="manual">📖 Инструкция к пиле</button>
+        </div>
+        ${S.mods.motor ? `<div class="row">Состояние мотора: <b style="color:${S.motor.health < 40 ? '#ff5252' : '#b2ff59'}">${Math.round(S.motor.health)}%</b>
+          ${S.motor.health < 100 ? `<button class="btn small" data-act="repair" ${S.inv.pistonkit ? '' : 'disabled'}>🔩 Перебрать (поршневая: ${S.inv.pistonkit || 0})</button>` : ''}</div>` : ''}
+      </div>`;
+    }
+    return `
+      <div class="grid2">
+        <div class="card preview-card">
+          <canvas id="g-preview" width="640" height="300"></canvas>
+          <div class="row wrap">${toggles || '<span class="small muted">Электроника пока не установлена — загляни во вкладку «Электроника».</span>'}</div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>🎨 Покраска рамы</h3>
+            <div class="swatches">${PAINTS.map(c => `<button class="sw ${S.paint === c ? 'sel' : ''}" style="background:${c}" data-act="paint" data-id="${c}"></button>`).join('')}</div>
+            ${S.mods.underglow ? `<h3>🌈 Цвет подсветки</h3><div class="swatches">${GLOWS.map(c => `<button class="sw glow ${S.glow === c ? 'sel' : ''}" style="background:${c};box-shadow:0 0 12px ${c}" data-act="glow" data-id="${c}"></button>`).join('')}</div>` : ''}
+            ${S.mods.alarm ? `<div class="row"><button class="btn" data-act="testalarm">🚨 Проверить сигналку</button></div>` : ''}
+            ${S.mods.horn ? `<div class="row"><button class="btn" data-act="testhorn">📯 Бибикнуть</button></div>` : ''}
+          </div>
+          <div class="card">
+            <h3>🛠️ Установлено</h3>
+            <div class="row wrap">${installed.map(p => `<span class="tag">${p.icon} ${p.name}</span>`).join('')}${S.mods.motor ? '<span class="tag hot">🔥 Мотор от бензопилы</span>' : ''}${upgrades}
+            ${!installed.length && !upgrades && !S.mods.motor ? '<span class="small muted">Пока стоковый снегокат</span>' : ''}</div>
+          </div>
+          ${fuel}
+        </div>
+      </div>`;
+  },
+
+  bindFuel() {
+    const upd = () => {
+      const p = +$('#mixP').value || 0, o = +$('#mixO').value || 0;
+      $('#mixRatio').textContent = p > 0 ? (o > 0 ? `Получится смесь 1:${Math.round(p / o)}` : 'Без масла! Мотор такое не любит.') : '';
+    };
+    $('#mixP').oninput = upd; $('#mixO').oninput = upd; upd();
+  },
+
+  startPreview() {
+    const cv = $('#g-preview'); if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const joints = Sled.makeJoints('sit');
+    let t = 0, last = performance.now();
+    const loop = now => {
+      if (!$('#g-preview') || App.screen !== 'garage' || this.tab !== 'sled') return;
+      t += (now - last) / 1000; last = now;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const g = ctx.createLinearGradient(0, 0, 0, 300);
+      g.addColorStop(0, '#2b3242'); g.addColorStop(1, '#151a24');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 640, 300);
+      // полки на стене
+      ctx.fillStyle = '#3b4356'; ctx.fillRect(30, 60, 160, 8); ctx.fillRect(450, 80, 160, 8);
+      ctx.font = '26px serif'; ctx.fillText('🔋🧰', 50, 56); ctx.fillText('🛢️🪚', 480, 76);
+      ctx.fillStyle = '#1e2330'; ctx.fillRect(0, 250, 640, 50);
+      // лампа
+      const lg = ctx.createRadialGradient(320, 0, 10, 320, 0, 260);
+      lg.addColorStop(0, 'rgba(255,240,200,0.25)'); lg.addColorStop(1, 'rgba(255,240,200,0)');
+      ctx.fillStyle = lg; ctx.fillRect(0, 0, 640, 300);
+      ctx.setTransform(2.4, 0, 0, -2.4, 340, 250);
+      Sled.draw(ctx, {
+        t, joints, mods: S.mods, paint: S.paint, glow: S.glow, engineOn: false, music: false,
+        lights: { head: S.mods.headlight && S.modOn.headlight, glow: S.mods.underglow && S.modOn.underglow, left: S.mods.turn && Math.sin(t * 0.8) > 0.5, right: S.mods.turn && Math.sin(t * 0.8) < -0.5, brake: S.mods.stoplight && Math.sin(t * 0.5) > 0.7 },
+        alarmBlink: true, noRider: true,
+      });
+      this.raf = requestAnimationFrame(loop);
+    };
+    this.raf = requestAnimationFrame(loop);
+  },
+
+  // ---------- вкладка «Электроника»
+  renderElectro() {
+    const tools = `<div class="card small">🔥 Паяльник: <b>${S.tools.station ? 'паяльная станция' : 'дедовский 40 Вт'}</b> · 🧵 Припой: <b>${S.inv.solder || 0}</b> точек · 〽️ Провода: <b>${S.inv.wire || 0}</b> · 📟 Мультиметр: <b>${S.tools.multimeter ? 'есть' : 'нет'}</b></div>`;
+    return tools + `<div class="cards">` + PROJECTS.map(p => {
+      const done = S.mods[p.id];
+      const parts = Object.entries(p.parts).map(([k, n]) => {
+        const have = S.inv[k] || 0;
+        return `<span class="part ${have >= n ? 'ok' : 'no'}">${ITEMS[k].icon} ${ITEMS[k].name}${n > 1 ? ' ×' + n : ''} <small>(${have})</small></span>`;
+      }).join('');
+      const wiresNeed = p.nets.reduce((a, n) => a + n.length - 1, 0);
+      const can = Solder.canStart(p);
+      const missing = Object.entries(p.parts).filter(([k, n]) => (S.inv[k] || 0) < n);
+      const cost = missing.reduce((a, [k, n]) => a + Math.ceil((n - (S.inv[k] || 0))) * ITEMS[k].price, 0);
+      return `<div class="card proj ${done ? 'done' : ''}">
+        <h3>${p.icon} ${p.name} <span class="diff">${'🔧'.repeat(p.diff)}</span></h3>
+        <div class="small">${p.desc}</div>
+        <div class="small eff">✨ ${p.effect}</div>
+        ${done ? '<div class="badge">✅ Установлено</div>' : `
+        <div class="parts">${parts}</div>
+        <div class="small muted">Нужно ~${wiresNeed} проводов и ~${wiresNeed * 2} точек пайки</div>
+        <div class="row">
+          <button class="btn primary" data-act="solder" data-id="${p.id}" ${can ? '' : 'disabled'}>🔥 Паять</button>
+          ${!can ? `<button class="btn" data-act="buykit" data-id="${p.id}" ${S.coins >= cost ? '' : 'disabled'}>🛒 Докупить детали (${cost} 🪙)</button>` : ''}
+        </div>`}
+      </div>`;
+    }).join('') + `</div>`;
+  },
+
+  // ---------- вкладка «Мотор»
+  renderMotor() {
+    if (S.motor.done) {
+      return `<div class="card hero"><h2>🔥 Мотор готов!</h2>
+        <p>Бывшая бензопила теперь толкает снегокат. Держи <b>W / ↑</b> на горке. Можно заезжать обратно наверх!</p>
+        <p>Состояние: <b>${Math.round(S.motor.health)}%</b> · В баке: <b>${Math.round(S.tank.fuel + S.tank.oil)} мл</b></p>
+        <p class="small">Заправка — во вкладке «Снегокат». Мешай смесь правильно, иначе мотор заклинит!</p></div>`;
+    }
+    const cur = S.motor.stage;
+    return `<div class="card small">Самый сложный проект: из старой бензопилы сделать мотор для снегоката. ${MOTOR_STAGES.length} этапов, много деталей и терпения.</div>
+      <div class="stages">` + MOTOR_STAGES.map((st, i) => {
+      const state = i < cur ? 'done' : i === cur ? 'cur' : 'locked';
+      let body = '';
+      if (state === 'cur') {
+        const req = Object.entries(st.req).map(([k, n]) => {
+          const have = S.inv[k] || 0;
+          return `<span class="part ${have >= n ? 'ok' : 'no'}">${ITEMS[k].icon} ${ITEMS[k].name} <small>(${have})</small></span>`;
+        }).join('');
+        const fuelReq = st.fuel ? `<span class="part ${S.tank.fuel >= st.fuel ? 'ok' : 'no'}">⛽ смесь в баке ≥ ${st.fuel} мл <small>(${Math.round(S.tank.fuel)})</small></span>` : '';
+        const miss = Motor.missing(st);
+        body = `<div class="small">${st.desc}</div><div class="parts">${req}${fuelReq}</div>
+          ${st.fuel ? '<div class="small muted">Бензин и масло покупаются в магазине, смешиваются во вкладке «Снегокат».</div>' : ''}
+          <button class="btn primary" data-act="motor" ${miss.length ? 'disabled' : ''}>${st.id === 'buy' ? '🚚 Притащить в гараж' : '▶ Начать'}</button>`;
+      }
+      return `<div class="stage ${state}"><div class="num">${state === 'done' ? '✓' : i + 1}</div><div class="sbody"><b>${st.icon} ${st.name}</b>${body}</div></div>`;
+    }).join('') + '</div>';
+  },
+
+  // ---------- вкладка «Магазин»
+  renderShop() {
+    const cats = Object.entries(CATS).map(([k, v]) => `<button class="chip ${this.shopCat === k ? 'on' : ''}" data-act="cat" data-id="${k}">${v}</button>`).join('');
+    const items = Object.entries(ITEMS).filter(([, it]) => it.cat === this.shopCat).map(([id, it]) => {
+      const owned = it.tool && S.tools[id];
+      const cnt = this.invCount(id);
+      return `<div class="item">
+        <div class="ico">${it.icon}</div>
+        <div class="info"><b>${it.name}</b>${it.pack ? ` <small>(${it.pack} ${it.unit})</small>` : ''}<div class="small muted">${it.desc || ''}</div>${cnt && !owned ? `<div class="small have">В наличии: ${cnt}</div>` : ''}</div>
+        ${owned ? '<span class="badge">✓ Есть</span>' : `<button class="btn buy" data-act="buy" data-id="${id}" ${S.coins >= it.price ? '' : 'disabled'}>${it.price} 🪙</button>`}
+      </div>`;
+    }).join('');
+    const flea = this.shopCat === 'flea' ? '<div class="card small">🏚️ Барахолка: дядьки в гаражах продают всякое. Возврата нет.</div>' : '';
+    return `<div class="row wrap cats">${cats}</div>${flea}<div class="items">${items}</div>`;
+  },
+
+  // ---------- вкладка «Достижения»
+  renderAch() {
+    const st = S.stats;
+    const got = ACH.filter(a => S.ach[a.id]).length;
+    return `<div class="card stats">
+        <div><b>${st.runs}</b><small>заездов</small></div>
+        <div><b>${fmt(st.best)}</b><small>рекорд очков</small></div>
+        <div><b>${st.flips}</b><small>сальто</small></div>
+        <div><b>${st.bestAir.toFixed(1)} с</b><small>макс. в воздухе</small></div>
+        <div><b>${st.bestDist.toFixed(1)} м</b><small>самый дальний прыжок</small></div>
+        <div><b>${S.mods.speedo ? st.maxSpeed.toFixed(0) + ' км/ч' : '—'}</b><small>макс. скорость</small></div>
+        <div><b>${st.crashes}</b><small>падений</small></div>
+        <div><b>${fmt(st.earned)}</b><small>заработано 🪙</small></div>
+      </div>
+      <h3 class="pad">🏆 Достижения ${got}/${ACH.length}</h3>
+      <div class="achs">${ACH.map(a => `<div class="ach ${S.ach[a.id] ? 'got' : ''}"><b>${S.ach[a.id] ? '🏆' : '🔒'} ${a.name}</b><small>${a.desc}${a.reward ? ` · +${a.reward} 🪙` : ''}</small></div>`).join('')}</div>`;
+  },
+
+  // ---------- вкладка «Настройки»
+  renderSettings() {
+    const saved = S.saved ? new Date(S.saved).toLocaleString('ru-RU') : '—';
+    return `<div class="card">
+      <h3>⚙️ Настройки</h3>
+      <div class="row"><button class="chip ${S.settings.sound ? 'on' : ''}" data-act="set" data-id="sound">🔊 Звук: ${S.settings.sound ? 'вкл' : 'выкл'}</button>
+      <button class="chip ${S.settings.music ? 'on' : ''}" data-act="set" data-id="music">🎵 Музыка из колонки: ${S.settings.music ? 'вкл' : 'выкл'}</button></div>
+    </div>
+    <div class="card">
+      <h3>💾 Сохранение</h3>
+      <p class="small">Прогресс сохраняется автоматически: после каждого действия, каждые 5 секунд и при закрытии вкладки.<br>Последнее сохранение: <b>${saved}</b> · В игре: <b>${Math.round(S.stats.playTime / 60)} мин</b></p>
+      <div class="row wrap">
+        <button class="btn" data-act="export">📤 Код сохранения</button>
+        <button class="btn" data-act="import">📥 Загрузить из кода</button>
+        <button class="btn danger" data-act="reset">🗑️ Начать заново</button>
+      </div>
+    </div>
+    <div class="card small muted">Снегокат v1.0 · сделано с паяльником и любовью ❄️</div>`;
+  },
+
+  // ---------- действия
+  act(a, id) {
+    switch (a) {
+      case 'toggle': S.modOn[id] = !S.modOn[id]; break;
+      case 'paint': S.paint = id; break;
+      case 'glow': S.glow = id; break;
+      case 'cat': this.shopCat = id; break;
+      case 'buy': this.buy(id); break;
+      case 'solder': Solder.start(PROJECTS.find(p => p.id === id)); return;
+      case 'buykit': this.buyKit(PROJECTS.find(p => p.id === id)); break;
+      case 'motor': Motor.begin(); break;
+      case 'testalarm': Sfx.alarm(1.5); return;
+      case 'testhorn': Sfx.hornTone(); return;
+      case 'fill': this.fill(); break;
+      case 'drain':
+        UI.modal('Слить бак?', 'Смесь из бака уйдёт в сугроб. Безвозвратно.', [
+          { label: 'Слить', cls: 'danger', onClick: () => { S.tank.fuel = 0; S.tank.oil = 0; Save.save(); this.render(); } }, { label: 'Отмена' }]);
+        return;
+      case 'manual':
+        UI.modal('📖 Инструкция к бензопиле', `<p>«…Двигатель двухтактный. Работает на <b>смеси бензина и масла 2Т в пропорции 1:50</b> (на 1 литр бензина — 20 мл масла).</p>
+          <p>Смесь беднее (меньше масла) — <b>задиры и заклинивание поршня</b>.<br>Смесь богаче (больше масла) — дым, нагар, мотор слабее.</p><p>Чистый бензин не заливать НИКОГДА.»</p>`);
+        return;
+      case 'repair':
+        if (S.inv.pistonkit > 0) { S.inv.pistonkit--; S.motor.health = 100; S.motor.seized = false; Sfx.success(); UI.toast('Мотор перебран — как новый!', 'good'); }
+        break;
+      case 'set': S.settings[id] = !S.settings[id]; if (id === 'sound' && S.settings.sound) Sfx.init(); break;
+      case 'export': {
+        const code = Save.exportCode();
+        UI.modal('📤 Код сохранения', `<p class="small">Скопируй и сохрани где-нибудь. На другом устройстве вставь через «Загрузить из кода».</p><textarea class="code" readonly onclick="this.select()">${code}</textarea>`, [
+          { label: '📋 Скопировать', keep: true, onClick: () => { navigator.clipboard && navigator.clipboard.writeText(code).then(() => UI.toast('Скопировано!', 'good')); } }, { label: 'Закрыть' }]);
+        return;
+      }
+      case 'import':
+        UI.modal('📥 Загрузить сохранение', `<textarea class="code" id="impCode" placeholder="Вставь код сюда"></textarea>`, [
+          { label: 'Загрузить', cls: 'primary', onClick: () => {
+            try { Save.importCode($('#impCode').value); Ride.h = null; UI.toast('Сохранение загружено!', 'good'); this.render(); }
+            catch (e) { UI.toast('Код не подходит 😕', 'bad'); }
+          } }, { label: 'Отмена' }]);
+        return;
+      case 'reset':
+        UI.modal('Начать заново?', 'Весь прогресс, детали и постройки будут удалены. Точно?', [
+          { label: 'Да, всё удалить', cls: 'danger', onClick: () => { Save.reset(); Ride.h = null; this.tab = 'sled'; this.render(); UI.toast('Новая игра. Дед снова подарил набор на фару 🎁'); } },
+          { label: 'Отмена' }]);
+        return;
+    }
+    Save.dirty();
+    this.render();
+  },
+
+  buy(id) {
+    const it = ITEMS[id];
+    if (S.coins < it.price) { Sfx.error(); return; }
+    S.coins -= it.price;
+    if (id === 'snow') S.snow += 400;
+    else if (it.tool) S.tools[id] = true;
+    else S.inv[id] = (S.inv[id] || 0) + (it.pack || 1);
+    Sfx.buy();
+    UI.toast(`${it.icon} Куплено: ${it.name}`);
+    Save.dirty();
+  },
+
+  buyKit(p) {
+    let cost = 0;
+    const need = Object.entries(p.parts).filter(([k, n]) => (S.inv[k] || 0) < n);
+    need.forEach(([k, n]) => cost += (n - (S.inv[k] || 0)) * ITEMS[k].price);
+    if (S.coins < cost) { Sfx.error(); return; }
+    S.coins -= cost;
+    need.forEach(([k, n]) => { S.inv[k] = n; });
+    Sfx.buy();
+    UI.toast(`Детали для «${p.name}» куплены`);
+  },
+
+  fill() {
+    const cap = S.tools.bigtank ? 1200 : 500;
+    const p = Math.max(0, Math.round(+$('#mixP').value || 0)), o = Math.max(0, Math.round(+$('#mixO').value || 0));
+    if (p + o === 0) return;
+    if (p > (S.inv.petrol || 0)) { UI.toast('Столько бензина нет — купи в магазине', 'bad'); return; }
+    if (o > (S.inv.oil || 0)) { UI.toast('Столько масла нет — купи в магазине', 'bad'); return; }
+    if (S.tank.fuel + S.tank.oil + p + o > cap + 0.5) { UI.toast(`Не влезет! Бак ${cap} мл`, 'bad'); return; }
+    S.inv.petrol -= p; S.inv.oil -= o;
+    S.tank.fuel += p; S.tank.oil += o;
+    Sfx.noise(0.8, 0.15, 600, 'bandpass');
+    const r = S.tank.oil > 0 ? S.tank.fuel / S.tank.oil : Infinity;
+    UI.toast(r === Infinity ? '⚠️ В баке чистый бензин! Мотору будет плохо.' : r > 70 ? '⚠️ Масла маловато…' : r < 30 ? '💨 Будет дымить — масла многовато' : '👌 Смесь что надо', r >= 30 && r <= 70 ? 'good' : 'bad');
+  },
+};
+
+</script>
+<script>
+'use strict';
+// ===== Точка входа =====
+const App = {
+  screen: 'title',
+  go(name) {
+    const prev = this.screen;
+    if (prev === 'ride' && name !== 'ride') Ride.exit();
+    UI.closeModal();
+    $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'scr-' + name));
+    this.screen = name;
+    if (name === 'garage') Garage.enter(prev === 'ride');
+    if (name === 'ride') Ride.enter();
+  },
+  addCoins(n) {
+    S.coins += n;
+    if (n > 0) S.stats.earned += n;
+    Garage.updateCoins();
+    if (S.coins >= 3000) this.ach('rich');
+    Save.dirty();
+  },
+  ach(id) {
+    if (S.ach[id]) return;
+    const a = ACH.find(x => x.id === id);
+    if (!a) return;
+    S.ach[id] = Date.now();
+    if (a.reward) { S.coins += a.reward; S.stats.earned += a.reward; }
+    UI.toast(`🏆 <b>${a.name}</b>${a.reward ? ` +${a.reward} 🪙` : ''}<br><small>${a.desc}</small>`, 'ach');
+    Sfx.success();
+    Garage.updateCoins();
+    Save.dirty();
+  },
+  init() {
+    Save.load();
+    MG.init();
+    Ride.init();
+    Garage.init();
+    const has = Save.has() && S.stats.introSeen;
+    $('#t-continue').textContent = has ? `▶ Продолжить (${fmt(S.coins)} 🪙)` : '▶ Играть';
+    $('#t-continue').onclick = () => {
+      Sfx.init();
+      Sfx.tone(523, 0.1, 'triangle', 0.15); Sfx.tone(784, 0.2, 'triangle', 0.15, 0, 0.1);
+      this.go('garage');
+      if (!S.stats.introSeen) {
+        S.stats.introSeen = 1; Save.dirty();
+        UI.modal('❄️ Зима. Двор. Снегокат.', `
+          <p>У тебя есть старенький снегокат, лопата и дедовский паяльник.</p>
+          <p>🛷 <b>Катайся с горки</b>, крути сальто и трюки — получай монеты.<br>
+          🪏 <b>Строй трамплины лопатой</b> — прямо на горке, во вкладке «Стройка».<br>
+          🔥 <b>Паяй электронику</b>: фары, поворотники, стоп-сигнал, сигнализацию, спидометр, колонку.<br>
+          🪚 <b>Собери мотор из старой бензопилы</b> — самое сложное. И тогда снегокат поедет сам!</p>
+          <p>Дед оставил набор на <b>фару</b>: аккумулятор, тумблер, светодиод. Начни с неё во вкладке «Электроника».</p>
+          <p class="small muted">Прогресс сохраняется автоматически.</p>`, [{ label: 'Поехали!', cls: 'primary' }]);
+      }
+    };
+    document.addEventListener('pointerdown', () => Sfx.init(), { once: true });
+  },
+};
+window.addEventListener('load', () => App.init());
+
+</script>
+</body>
+</html>
