@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Лунный сад</title>
+  <meta name="description" content="Выращивайте, скрещивайте и продавайте растения, купите билет на Луну и захватите её первыми.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">🌙 <span>Лунный сад</span></div>
+    <div class="stats">
+      <span class="coinbox">🪙 <b id="coins">0</b></span>
+      <span id="phase" class="phase"></span>
+      <span id="clock" class="clock"></span>
+    </div>
+    <button class="iconbtn" data-act="settings" title="Настройки" aria-label="Настройки">⚙️</button>
+  </header>
+  <div id="goal" class="goal"></div>
+  <nav id="tabs" class="tabs"></nav>
+  <main id="main"></main>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <div id="modal" class="modal"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/trade.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
