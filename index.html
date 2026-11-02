@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0f1624">
+<title>Снегокат: гаражный тюнинг</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Титульный экран -->
+  <section id="scr-title" class="screen active">
+    <div class="title-snow"></div>
+    <div class="title-box">
+      <div class="title-icon">🛷</div>
+      <h1>СНЕГОКАТ</h1>
+      <p class="sub">гаражный тюнинг · горки · сальто · бензопила</p>
+      <button id="t-continue" class="btn big primary">▶ Играть</button>
+      <p class="small muted">Клавиатура или сенсорный экран. На телефоне лучше горизонтально.</p>
+    </div>
+  </section>
+
+  <!-- Гараж -->
+  <section id="scr-garage" class="screen">
+    <header class="topbar">
+      <div class="logo">🛷 <span>Гараж</span></div>
+      <div class="coins">🪙 <span id="g-coins">0</span></div>
+      <button id="btn-go" class="btn primary">На горку! ▶</button>
+    </header>
+    <nav id="g-tabs" class="tabs">
+      <button data-tab="sled">🛷 Снегокат</button>
+      <button data-tab="electro">🔥 Электроника</button>
+      <button data-tab="motor">🪚 Мотор</button>
+      <button data-tab="shop">🛒 Магазин</button>
+      <button data-tab="ach">🏆 Достижения</button>
+      <button data-tab="settings">⚙️</button>
+    </nav>
+    <main id="g-body" class="g-body"></main>
+  </section>
+
+  <!-- Горка -->
+  <section id="scr-ride" class="screen">
+    <canvas id="ride-canvas"></canvas>
+    <div class="ride-top">
+      <button id="r-garage" class="btn">🏠 Гараж</button>
+      <button id="r-build" class="btn">🪏 Стройка</button>
+      <button id="r-night" class="btn">🌙 Ночь</button>
+      <button id="r-light" class="btn">🔦</button>
+      <button id="r-restart" class="btn">↺</button>
+    </div>
+    <div id="build-bar" class="build-bar hidden">
+      <button data-tool="raise">⬆️ Насыпать</button>
+      <button data-tool="dig">⬇️ Копать</button>
+      <button data-tool="smooth">〰️ Сгладить</button>
+      <button data-tool="kicker">📐 Кикер</button>
+      <button data-tool="bigkicker">🚀 Большой кикер</button>
+      <button data-tool="landing">🛬 Приземлялка</button>
+      <button data-tool="ice">🧊 Залить лёд</button>
+      <button data-tool="unice">❄️ Убрать лёд</button>
+      <span class="snow">❄️ Снег: <b id="b-snow">0</b></span>
+      <button id="b-left">◀</button><button id="b-right">▶</button>
+      <button id="b-reset" class="danger">Сброс</button>
+    </div>
+    <div id="touch" class="touch hidden">
+      <div class="tl">
+        <button data-k="left">⟲</button>
+        <button data-k="right">⟳</button>
+      </div>
+      <div class="tc">
+        <button data-k="KeyZ">🦸</button>
+        <button data-k="KeyX">🙌</button>
+        <button data-k="KeyC">🦵</button>
+        <button data-k="KeyV">🤸</button>
+        <button data-k="sigL" data-need="turn">◀️</button>
+        <button data-k="horn" data-need="horn">📯</button>
+        <button data-k="sigR" data-need="turn">▶️</button>
+      </div>
+      <div class="tr">
+        <button data-k="brake" class="sm">тормоз</button>
+        <button data-k="gas" data-need="motor" class="sm">газ</button>
+        <button data-k="push" class="wide">толчок</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Мини-игры -->
+<div id="mg" class="overlay hidden">
+  <div class="mg-win">
+    <div class="mg-head"><h2 id="mg-title"></h2><button id="mg-close" class="btn">✕ Выйти</button></div>
+    <div class="mg-main">
+      <canvas id="mg-canvas" width="800" height="450"></canvas>
+      <div id="mg-info" class="mg-info"></div>
+    </div>
+    <div id="mg-btns" class="mg-btns"></div>
+  </div>
+</div>
+
+<!-- Модалка -->
+<div id="modal" class="overlay hidden">
+  <div class="modal-win">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div id="modal-btns" class="modal-btns"></div>
+  </div>
+</div>
+<div id="toasts"></div>
+
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/save.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/sled.js"></script>
+<script src="js/solder.js"></script>
+<script src="js/motor.js"></script>
+<script src="js/ride.js"></script>
+<script src="js/garage.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
